@@ -146,7 +146,7 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') {
     my $object = $c->model(join('::', $config->{schema}, $config->{resultset}));
     
     if($self->config->{default_rs_method}) {
-        my $rs = $self->config->{default_rs_method}
+        my $rs = $self->config->{default_rs_method};
         $object = $object->$rs;
     }
     
