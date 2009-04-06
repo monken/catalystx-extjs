@@ -11,6 +11,7 @@ use Scalar::Util qw/ weaken /;
 use Carp qw/ croak /;
 
 use HTML::FormFu::ExtJS;
+use HTML::FormFu::Util qw( _merge_hashes );
 use Path::Class;
 use HTML::Entities;
 use JSON qw(encode_json);
@@ -32,12 +33,15 @@ sub new {
     my $self = shift->next::method(@_);
     my ($c) = @_;
     
+    my $defaults = { model_config => { schema => 'DBIC' } };
     my $self_config   = $self->config || {};
     my $parent_config = $c->config->{'Controller::ExtJS'} || {};
-    
-    my %defaults = ( model_config => { schema => 'DBIC', resultset => $self->default_resultset } );
-    
-    $self->_extjs_config({%defaults, %$self_config, %$parent_config});
+
+    # merge hashes with right hand precedence
+    my $merged_config = _merge_hashes( $defaults, $self_config );
+    $merged_config = _merge_hashes( $merged_config, $parent_config );
+
+    $self->_extjs_config($merged_config);
     
     return $self;
     
