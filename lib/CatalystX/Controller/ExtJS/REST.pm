@@ -150,9 +150,10 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') {
         $object = $object->$rs;
     }
     
-    $object = $object->find($id);
+    my $method = $config->{find_method} || 'find';
+    $object = $object->$method($id);
 
-    if ($object) {
+    if (defined $object) {
         $c->stash->{object} = $object;
     }
 }
@@ -408,6 +409,14 @@ This will lead to the following chain:
 To create, delete and modify C<user> objects, simply C<POST>, C<DELETE> or C<PUT> to
 the url C</user>. C<POST> and C<DELETE> require that you add the id to that url,
 e. g. C</user/1234>.
+
+=head2 Configuration options
+
+=item find_method
+The method to call on the resultset to get an existing row object.
+This can be set to the name of a custom function function which is defined with the (custom) resultset class.
+It needs to take the primary key as first parameter.
+Defaults to 'find'.
 
 =head2 Handling Uploads
 
