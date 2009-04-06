@@ -139,7 +139,7 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') {
     croak $self->base_file." cannot be found" unless(-e $self->base_file);
     
     my $config = Config::Any->load_files( {files => [ $self->base_file ], use_ext => 1, flatten_to_hash => 0 } );
-    $config = { %{$self->_extjs_config->{model_config}}, %{$config->{(keys %{$config})[0]}->{model_config} || {}} };
+    $config = { %{$self->_extjs_config->{model_config}}, %{((values %{$config->[0]})[0])->{model_config} || {}} };
     $config->{resultset} ||= $self->default_resultset;
     croak "Need resultset and schema" unless($config->{resultset} && $config->{schema});
     
