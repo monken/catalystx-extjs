@@ -147,7 +147,7 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') {
     
     if($self->config->{default_rs_method}) {
         my $rs = $self->config->{default_rs_method};
-        $object = $object->$rs;
+        $object = $object->$rs($c);
     }
     
     my $method = $config->{find_method} || 'find';
@@ -164,6 +164,7 @@ sub object_PUT {
 
     my $form = $self->get_form($c);
     
+    $c->log->debug("!!!!!!!".$self->path_to_forms('post'));
     $form->load_config_file( $self->path_to_forms('put') );
 
     $self->object_PUT_or_POST($c, $form, $object);
@@ -239,7 +240,7 @@ sub object_DELETE {
 
 sub path_to_forms {
     my $self = shift;
-    my $file = Path::Class::File->new($self->base_path  (shift) . '.yml');
+    my $file = Path::Class::File->new($self->base_path,  (shift) . '.yml');
     return -e $file ? $file : $self->base_file;
 }
 
@@ -329,7 +330,7 @@ Then you will want to create the following files:
        lists/
              user.yml
 
-Only C<root/forms/user.yml> is essential. All other files must not exists. This controller
+Only C<root/forms/user.yml> is required. All other files must not exists. This controller
 will fall back to the so called base file for all requests.
 
 This controller tries to guess the correct model and resultset. The model defaults
@@ -447,8 +448,8 @@ If you want to handle uploads yourself, overwrite L</handle_uploads>
 
 But this should to be part of the model actually.
 
-Make sure you do not include a file field in your GET form definition. It will
-cause an security error in your browser because it is not allowed set the value of
+Make sure you do not include a file field in your C<GET> form definition. It will
+cause a security error in your browser because it is not allowed set the value of
 a file field.
 
 
