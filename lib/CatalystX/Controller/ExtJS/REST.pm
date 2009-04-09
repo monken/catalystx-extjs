@@ -18,6 +18,8 @@ use JSON qw(encode_json);
 
 use Lingua::EN::Inflect;
 
+our $VERSION = '0.01';
+$VERSION = eval $VERSION;  # see L<perlmodstyle>
 
 __PACKAGE__->mk_accessors(qw(_extjs_config));
 
@@ -28,6 +30,15 @@ __PACKAGE__->mk_accessors(qw(_extjs_config));
     
 #    return $self;
 #}
+
+=head1 PUBLIC METHODS
+
+=head2 new
+
+Setup new controller and initialize config values from application config
+file, inherited module config or module defaults.
+
+=cut
 
 sub new {
     my $self = shift->next::method(@_);
@@ -48,10 +59,22 @@ sub new {
 }
     
 
+=head2 begin
+
+Run this code before any action in this controller.
+
+=cut
+
 sub begin : ActionClass('+CatalystX::Action::ExtJS::Deserialize') {
     my ( $self, $c ) = @_;
     $self->next::method($c);
 }
+
+=head2 end
+
+Run this code after finishing any action in this controller.
+
+=cut
 
 sub end : ActionClass('Serialize') {
     my ( $self, $c ) = @_;
@@ -91,11 +114,25 @@ sub _parse_NSListPathPart_attr {
     }
 }
 
+=head2 is_extjs_upload
+
+Returns true if the current request looks like a request from ExtJS and has
+multipart form data, so usually an upload.
+
+=cut
+
 sub is_extjs_upload {
     my ( $self, $c ) = @_;
     return ( $c->req->param('x-requested-by') && $c->req->param('x-requested-by') eq "ExtJS"
           && $c->req->header('Content-Type') && $c->req->header('Content-Type') =~ /^multipart\/form-data/ );
 }
+
+=head2 default_resultset
+
+Determines the default name of the resultset class from the Model / View or
+Controller class.
+
+=cut
 
 sub default_resultset {
     my ($self, $c) = @_;
@@ -106,6 +143,12 @@ sub default_resultset {
     }
     return $prefix;
 }
+
+=head2 list
+
+List Action which returns the data for a ExtJS grid.
+
+=cut
 
 sub list : Chained('/') NSListPathPart Args {
     my ( $self, $c ) = @_;
@@ -132,7 +175,11 @@ sub list : Chained('/') NSListPathPart Args {
     # list
 }
 
+=head2 object
 
+REST Action which returns works with single model entites.
+
+=cut
 
 sub object : Chained('/') NSPathPart Args ActionClass('REST') {
     my ( $self, $c, $id ) = @_;
@@ -158,6 +205,12 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') {
     }
 }
 
+=head2 object_PUT
+
+REST Action to update a single model entity with a PUT request.
+
+=cut
+
 sub object_PUT {
     my ( $self, $c ) = @_;
     my $object = $c->stash->{object};
@@ -181,6 +234,13 @@ sub object_PUT {
 
 }
 
+=head2 object_PUT_or_POST
+
+Inernal method for REST Actions to handle the update of single model entity
+with PUT or POST requests.
+
+=cut
+
 sub object_PUT_or_POST {
     my ($self, $c, $form, $object) = @_;
     foreach my $upload (@{$form->get_all_elements({type => "File"})}) {
@@ -193,6 +253,12 @@ sub object_PUT_or_POST {
     }
 
 }
+
+=head2 object_POST
+
+REST Action to create a single model entity with a POST request.
+
+=cut
 
 sub object_POST {
     my ( $self, $c ) = @_;
@@ -225,6 +291,12 @@ sub object_POST {
 
 }
 
+=head2 object_GET
+
+REST Action to get the data of a single model entity with a GET request.
+
+=cut
+
 sub object_GET {
     my ( $self, $c ) = @_;
     my $form = $self->get_form($c);
@@ -232,11 +304,24 @@ sub object_GET {
     $self->status_ok( $c, entity => $form->form_data( $c->stash->{object} ) );
 }
 
+=head2 object_DELETE
+
+REST Action to delete a single model entity with a DELETE request.
+
+=cut
+
 sub object_DELETE {
     my ( $self, $c ) = @_;
     $c->stash->{object}->delete;
     $self->status_ok( $c, entity => { message => "Object has been deleted" } );
 }
+
+=head2 path_to_forms
+
+Returns the path to the specific form config file or the default form config
+file if the specfic one can not be found.
+
+=cut
 
 sub path_to_forms {
     my $self = shift;
@@ -244,10 +329,22 @@ sub path_to_forms {
     return -e $file ? $file : $self->base_file;
 }
 
+=head2 base_path
+
+Returns the path in which form config files will be searched.
+
+=cut
+
 sub base_path {
     my $self = shift;
     return Path::Class::Dir->new( qw(root forms), split( /\//, $self->action_namespace ) );
 }
+
+=head2 base_file
+
+Returns the path to the default form config file.
+
+=cut
 
 sub base_file {
     my $self = shift;
@@ -255,11 +352,23 @@ sub base_file {
     return $self->base_path->parent->file((pop @path) . '.yml');
 }
 
+=head2 list_base_path
+
+Returns the path in which form config files for grids will be searched.
+
+=cut
 
 sub list_base_path {
     my $self = shift;
     return Path::Class::Dir->new( qw(root lists), split( /\//, $self->action_namespace ) );
 }
+
+=head2 list_base_file
+
+Returns the path to the specific form config file for grids or the default
+form config file if the specfic one can not be found.
+
+=cut
 
 sub list_base_file {
     my $self = shift;
@@ -267,6 +376,12 @@ sub list_base_file {
     my $file = $self->list_base_path->parent->file((pop @path) . '.yml');
     return -e $file ? $file : $self->base_file;
 }
+
+=head2 get_form
+
+Returns a new ExtJS FormFu class and sets the model config options.
+
+=cut
 
 sub get_form {
     my ($self, $c) = @_;
@@ -282,6 +397,12 @@ sub get_form {
     return $form;
 }
 
+=head2 handle_uploads
+
+Handles uploaded files by assigning the filehandle to the column accessor of
+the DBIC row object.
+
+=cut
 
 
 sub handle_uploads {
@@ -413,11 +534,15 @@ e. g. C</user/1234>.
 
 =head2 Configuration options
 
+=over
+
 =item find_method
 The method to call on the resultset to get an existing row object.
 This can be set to the name of a custom function function which is defined with the (custom) resultset class.
 It needs to take the primary key as first parameter.
 Defaults to 'find'.
+
+=back
 
 =head2 Handling Uploads
 
