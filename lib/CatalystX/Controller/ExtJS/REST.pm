@@ -31,6 +31,39 @@ __PACKAGE__->mk_accessors(qw(_extjs_config));
 #    return $self;
 #}
 
+=head1 CONFIGURATION
+
+=head2 find_method
+
+=head2 default_rs_method
+
+=head2 form_base_path
+
+Defaults to C<root/forms>
+
+=head2 list_base_path
+
+Defaults to C<root/lists>
+
+=head2 model_config
+
+=head3 schema
+
+Defaults to C<DBIC>
+
+=head3 resultset
+
+Defaults to L</default_resultset>
+
+=head2 namespace
+
+Defaults to L<Catalyst::Controller/namespace>
+
+=head2 list_namespace
+
+Defaults to the plural form of L</namespace>. If this is the same as L</namespace> C<list_> is prepended.
+
+
 =head1 PUBLIC METHODS
 
 =head2 new
@@ -44,7 +77,9 @@ sub new {
     my $self = shift->next::method(@_);
     my ($c) = @_;
     
-    my $defaults = { model_config => { schema => 'DBIC' } };
+    my $defaults = { model_config => { schema => 'DBIC', resultset => $self->default_resultset },
+                     form_base_path => [qw(root forms)],
+                     list_base_path => [qw(root lists)] };
     my $self_config   = $self->config || {};
     my $parent_config = $c->config->{'Controller::ExtJS'} || {};
 
@@ -117,7 +152,15 @@ sub _parse_NSListPathPart_attr {
 =head2 is_extjs_upload
 
 Returns true if the current request looks like a request from ExtJS and has
-multipart form data, so usually an upload.
+multipart form data, so usually an upload. This requires that you add a C<x-requested-by> parameter to your
+form which has the value C<ExtJS>. This can be done either by adding a hidden form field,
+by using the C<params> config option of ExtJS C<Ext.form.Action.Submit> or C<extraParams> in C<Ext.Ajax.request>.
+
+You implement the latter globally using this call:
+
+  Ext.Ajax.defaultHeaders = {
+      'x-requested-by': 'ExtJS'
+  };
 
 =cut
 
@@ -186,7 +229,7 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') {
     croak $self->base_file." cannot be found" unless(-e $self->base_file);
     
     my $config = Config::Any->load_files( {files => [ $self->base_file ], use_ext => 1, flatten_to_hash => 0 } );
-    $config = { %{$self->_extjs_config->{model_config}}, %{((values %{$config->[0]})[0])->{model_config} || {}} };
+    $config = { %{$self->_extjs_config->{model_config}}, %{$config->{$self->base_file}->{model_config} || {}} };
     $config->{resultset} ||= $self->default_resultset;
     croak "Need resultset and schema" unless($config->{resultset} && $config->{schema});
     
@@ -198,9 +241,9 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') {
     }
     
     my $method = $config->{find_method} || 'find';
-    $object = $object->$method($id);
-
-    if (defined $object) {
+    
+    if (defined $id && defined $object) {
+        $object = $object->$method($id);
         $c->stash->{object} = $object;
     }
 }
@@ -217,7 +260,6 @@ sub object_PUT {
 
     my $form = $self->get_form($c);
     
-    $c->log->debug("!!!!!!!".$self->path_to_forms('post'));
     $form->load_config_file( $self->path_to_forms('put') );
 
     $self->object_PUT_or_POST($c, $form, $object);
@@ -243,6 +285,10 @@ with PUT or POST requests.
 
 sub object_PUT_or_POST {
     my ($self, $c, $form, $object) = @_;
+    
+    # the following lines will be obsolete with the new FormFu::Model::DBIC release
+    # a model_config ignore_if_empty will be introduced
+    
     foreach my $upload (@{$form->get_all_elements({type => "File"})}) {
         $form->remove_element($upload)
           unless($c->req->param($upload->nested_name));
@@ -262,18 +308,13 @@ REST Action to create a single model entity with a POST request.
 
 sub object_POST {
     my ( $self, $c ) = @_;
-    my $object = $c->stash->{object};
     my $form = $self->get_form($c);
+    
     $form->load_config_file( $self->path_to_forms('post') );
-    foreach my $password (@{$form->get_all_elements({type => "Password"})}) {
-        $form->remove_element($password);
-        #die;
-          #unless($form->param($password->nested_name)); # "0" might be a valid password
-    }
-    $self->object_PUT_or_POST($c, $form, $object);
+    
+    $self->object_PUT_or_POST($c, $form);
           
     $form->process( $c->req );
-    
     
     if ( $form->submitted_and_valid ) {
         my $row = $form->model->create;
@@ -337,7 +378,7 @@ Returns the path in which form config files will be searched.
 
 sub base_path {
     my $self = shift;
-    return Path::Class::Dir->new( qw(root forms), split( /\//, $self->action_namespace ) );
+    return Path::Class::Dir->new( @{$self->_extjs_config->{form_base_path}}, split( /\//, $self->action_namespace ) );
 }
 
 =head2 base_file
@@ -360,7 +401,7 @@ Returns the path in which form config files for grids will be searched.
 
 sub list_base_path {
     my $self = shift;
-    return Path::Class::Dir->new( qw(root lists), split( /\//, $self->action_namespace ) );
+    return Path::Class::Dir->new( @{$self->_extjs_config->{list_base_path}}, split( /\//, $self->action_namespace ) );
 }
 
 =head2 list_base_file
