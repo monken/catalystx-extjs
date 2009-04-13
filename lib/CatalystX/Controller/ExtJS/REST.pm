@@ -35,6 +35,8 @@ __PACKAGE__->mk_accessors(qw(_extjs_config));
 
 =head2 find_method
 
+=head2 call_process_on_GET
+
 =head2 default_rs_method
 
 =head2 form_base_path
@@ -232,6 +234,7 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') {
     $config = { %{$self->_extjs_config->{model_config}}, %{$config->[0]->{$self->base_file}->{model_config} || {}} };
     $config->{resultset} ||= $self->default_resultset;
     croak "Need resultset and schema" unless($config->{resultset} && $config->{schema});
+    $c->stash->{extjs_formfu_model_config} = $config;
     
     my $object = $c->model(join('::', $config->{schema}, $config->{resultset}));
     
@@ -344,6 +347,12 @@ sub object_GET {
     my ( $self, $c ) = @_;
     my $form = $self->get_form($c);
     $form->load_config_file( $self->path_to_forms('get') );
+
+    my $config = $c->stash->{extjs_formfu_model_config};
+
+    $form->process( $c->req )
+        if (defined $config->{call_process_on_GET} && $config->{call_process_on_GET});
+    
     $self->status_ok( $c, entity => $form->form_data( $c->stash->{object} ) );
 }
 
