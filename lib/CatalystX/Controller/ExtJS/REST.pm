@@ -229,7 +229,7 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') {
     croak $self->base_file." cannot be found" unless(-e $self->base_file);
     
     my $config = Config::Any->load_files( {files => [ $self->base_file ], use_ext => 1, flatten_to_hash => 0 } );
-    $config = { %{$self->_extjs_config->{model_config}}, %{$config->{$self->base_file}->{model_config} || {}} };
+    $config = { %{$self->_extjs_config->{model_config}}, %{$config->[0]->{$self->base_file}->{model_config} || {}} };
     $config->{resultset} ||= $self->default_resultset;
     croak "Need resultset and schema" unless($config->{resultset} && $config->{schema});
     
@@ -243,6 +243,8 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') {
     my $method = $config->{find_method} || 'find';
     
     if (defined $id && defined $object) {
+# TODO
+# What happens if id does not exist in db or undefined
         $object = $object->$method($id);
         $c->stash->{object} = $object;
     }
