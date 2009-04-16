@@ -327,7 +327,8 @@ sub object_POST {
         my $response = $form->validation_response;
         $self->status_created(
             $c,
-            location => $c->req->uri->as_string . "/" . $row->id,
+            location => $c->uri_for( $self->action_namespace, $row->id ),
+#            location => $c->req->uri->as_string . "/" . $row->id,
             entity   => $form->validation_response
         );
     }
