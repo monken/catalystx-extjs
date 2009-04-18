@@ -35,7 +35,23 @@ __PACKAGE__->mk_accessors(qw(_extjs_config));
 
 =head2 find_method
 
+Use a different method when looking for existing model rows.
+
+Defaults to 'find'.
+
 =head2 call_process_on_GET
+
+Call $form->process on GET requests.
+This might be nescessary when using Form or Field Plugins.
+
+Defaults to false.
+
+=head2 respond_with_model_values
+
+Get the values that are send back to ExtJS if a valid form is submitted
+from model.
+
+Defaults to false.
 
 =head2 default_rs_method
 
@@ -262,23 +278,29 @@ REST Action to update a single model entity with a PUT request.
 sub object_PUT {
     my ( $self, $c ) = @_;
     my $object = $c->stash->{object};
+    my $config = $c->stash->{extjs_formfu_model_config};
 
     my $form = $self->get_form($c);
-    
     $form->load_config_file( $self->path_to_forms('put') );
 
     $self->object_PUT_or_POST($c, $form, $object);
     
     $form->process( $c->req );
     
-    
-    
     if ( $form->submitted_and_valid ) {
         my $row = $form->model->update($object);
         $self->handle_uploads($c, $row, $form);
-    }
-    $self->status_ok( $c, entity => $form->validation_response );
 
+        my $response = (defined $config->{respond_with_model_values}
+                && $config->{respond_with_model_values})
+            ? $form->form_data( $row )
+            : $form->validation_response;
+
+        $self->status_ok( $c, entity => $response );
+    }
+    else {
+        $self->status_ok( $c, entity => $form->validation_response );
+    }
 }
 
 =head2 object_PUT_or_POST
@@ -313,23 +335,30 @@ REST Action to create a single model entity with a POST request.
 
 sub object_POST {
     my ( $self, $c ) = @_;
+
+    my $config = $c->stash->{extjs_formfu_model_config};
+
     my $form = $self->get_form($c);
-    
     $form->load_config_file( $self->path_to_forms('post') );
-    
+
     $self->object_PUT_or_POST($c, $form);
-          
+
     $form->process( $c->req );
-    
+
     if ( $form->submitted_and_valid ) {
         my $row = $form->model->create;
         $self->handle_uploads($c, $row, $form);
-        my $response = $form->validation_response;
+
+        my $response = (defined $config->{respond_with_model_values}
+                && $config->{respond_with_model_values})
+            ? $form->form_data( $row )
+            : $form->validation_response;
+
         $self->status_created(
             $c,
             location => $c->uri_for( '', $row->id ),
 #            location => $c->req->uri->as_string . "/" . $row->id,
-            entity   => $form->validation_response
+            entity   => $response
         );
     }
     else {
