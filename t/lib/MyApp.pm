@@ -1,7 +1,13 @@
-package MyApp;
+package
+  MyApp;
   
-use Catalyst qw(-Debug);
+use Moose;  
 
-__PACKAGE__->setup;
+extends 'Catalyst';
+
+use Catalyst::Request::REST::ForBrowsers;
+
+__PACKAGE__->setup( qw(-Debug) );
+
 
 1;

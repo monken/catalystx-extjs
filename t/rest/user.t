@@ -22,14 +22,7 @@ is($json->{results}, 0, 'no results');
 
 my $res = $mech->request(POST '/user', [name => 'bar', password => 'foo']);
 
-# POST issues a redirect because Controller::REST sets a Location header
-# $mech follows this redirect to /user/1 but sends not the Accept header
-# so we get an error on the catalyst console that the data could
-# not be serialized.
-
-ok($json = JSON::decode_json($res->previous->content), 'response is JSON response');
-
-# $res->previous contains the data of the response previous to the redirect
+ok($json = JSON::decode_json($res->content), 'response is JSON response');
 
 is($json->{success}, 1, 'submission was successful');
 

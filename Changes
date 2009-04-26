@@ -1,5 +1,5 @@
 Revision history for CatalystX-Controller-ExtJS
 
-0.01    Date/time
-        First version, released on an unsuspecting world.
-
+0.00_01 2009-04-26
+  - added tests for skip_end and for_browser
+  - doc fixes

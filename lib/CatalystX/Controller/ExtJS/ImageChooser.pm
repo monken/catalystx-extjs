@@ -1,5 +1,7 @@
 package CatalystX::Controller::ExtJS::ImageChooser;
 
+use strict;
+
 use Carp;
 
 use Path::Class;

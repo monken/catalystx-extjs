@@ -1,9 +1,10 @@
 package CatalystX::Controller::ExtJS::REST;
+
 use strict;
 use warnings;
 
 
-use base qw(Catalyst::Controller::REST Class::Accessor::Fast);
+use base qw(Catalyst::Controller::REST);
 #with 'Catalyst::Component::InstancePerContext';
 
 use Config::Any;
@@ -19,168 +20,31 @@ use JSON qw(encode_json);
 use Lingua::EN::Inflect;
 
 our $VERSION = '0.01';
-$VERSION = eval $VERSION;  # see L<perlmodstyle>
 
-__PACKAGE__->mk_accessors(qw(_extjs_config));
+use Moose;
 
-#sub build_per_context_instance {
-#    my ( $self, $c ) = @_;
-    
-#    $self->{c} = $c;
-    
-#    return $self;
-#}
+has '_extjs_config' => ( is => 'rw', isa => 'HashRef', builder => '_extjs_config_builder', lazy => 1 );
 
-=head1 CONFIGURATION
-
-=head2 find_method
-
-Use a different method when looking for existing model rows.
-
-Defaults to 'find'.
-
-=head2 call_process_on_GET
-
-Call $form->process on GET requests.
-This might be nescessary when using Form or Field Plugins.
-
-Defaults to false.
-
-=head2 respond_with_model_values
-
-Get the values that are send back to ExtJS if a valid form is submitted
-from model.
-
-Defaults to false.
-
-=head2 default_rs_method
-
-=head2 form_base_path
-
-Defaults to C<root/forms>
-
-=head2 list_base_path
-
-Defaults to C<root/lists>
-
-=head2 model_config
-
-=head3 schema
-
-Defaults to C<DBIC>
-
-=head3 resultset
-
-Defaults to L</default_resultset>
-
-=head2 namespace
-
-Defaults to L<Catalyst::Controller/namespace>
-
-=head2 list_namespace
-
-Defaults to the plural form of L</namespace>. If this is the same as L</namespace> C<list_> is prepended.
-
-
-=head1 PUBLIC METHODS
-
-=head2 new
-
-Setup new controller and initialize config values from application config
-file, inherited module config or module defaults.
-
-=cut
-
-sub new {
-    my $self = shift->next::method(@_);
-    my ($c) = @_;
+sub _extjs_config_builder {
+    my $self = shift;
+    my $c = $self->_application;
+    my $default_rs_method = lc($self->default_resultset);
+    $default_rs_method =~ s/::/_/g;
     
     my $defaults = { model_config => { schema => 'DBIC', resultset => $self->default_resultset },
                      form_base_path => [qw(root forms)],
-                     list_base_path => [qw(root lists)] };
+                     list_base_path => [qw(root lists)],
+                     default_rs_method => 'extjs_rest_'.$default_rs_method };
     my $self_config   = $self->config || {};
-    my $parent_config = $c->config->{'Controller::ExtJS'} || {};
+    my $parent_config = $c->config->{'ControllerX::ExtJS::REST'} || {};
 
     # merge hashes with right hand precedence
-    my $merged_config = _merge_hashes( $defaults, $self_config );
-    $merged_config = _merge_hashes( $merged_config, $parent_config );
+    my $merged_config = $self->merge_config_hashes( $defaults, $self_config );
+    $merged_config = $self->merge_config_hashes( $merged_config, $parent_config );
 
-    $self->_extjs_config($merged_config);
-    
-    return $self;
+    return $merged_config;
     
 }
-    
-
-=head2 begin
-
-Run this code before any action in this controller.
-
-=cut
-
-sub begin : ActionClass('+CatalystX::Action::ExtJS::Deserialize') {
-    my ( $self, $c ) = @_;
-    $self->next::method($c);
-}
-
-=head2 end
-
-Run this code after finishing any action in this controller.
-
-=cut
-
-sub end : ActionClass('Serialize') {
-    my ( $self, $c ) = @_;
-    $self->next::method($c);
-    if ( $self->is_extjs_upload($c) ) {
-        my $stash_key = (
-              $self->config->{'serialize'}
-            ? $self->config->{'serialize'}->{'stash_key'}
-            : $self->config->{'stash_key'}
-          )
-          || 'rest';
-        my $output;
-        eval { $output = JSON->new->encode( $c->stash->{$stash_key} ); };
-
-        $c->res->content_type('text/html');
-        $c->res->output( encode_entities($output) );
-    }
-}
-
-sub _parse_NSPathPart_attr {
-    my ( $self, $c ) = @_;
-    return ( PathPart => $self->action_namespace );
-}
-
-
-sub _parse_NSListPathPart_attr {
-    my ( $self, $c ) = @_;
-    if($self->config->{list_namespace}) {
-        return ( PathPart => $self->config->{list_namespace} )
-    } else {
-        my @path = split( /\//, $self->action_namespace );
-        $path[-1] = Lingua::EN::Inflect::PL(my $name = $path[-1]);
-        $path[-1] = "list_".$path[-1]
-          if($name eq $path[-1]);
-    
-        return ( PathPart => join('/', @path) );
-    }
-}
-
-=head2 is_extjs_upload
-
-Returns true if the current request looks like a request from ExtJS and has
-multipart form data, so usually an upload. This requires that you add a C<x-requested-by> parameter to your
-form which has the value C<ExtJS>. This can be done either by adding a hidden form field,
-by using the C<params> config option of ExtJS C<Ext.form.Action.Submit> or C<extraParams> in C<Ext.Ajax.request>.
-
-You implement the latter globally using this call:
-
-  Ext.Ajax.defaultHeaders = {
-      'x-requested-by': 'ExtJS'
-  };
-
-=cut
 
 sub is_extjs_upload {
     my ( $self, $c ) = @_;
@@ -188,28 +52,17 @@ sub is_extjs_upload {
           && $c->req->header('Content-Type') && $c->req->header('Content-Type') =~ /^multipart\/form-data/ );
 }
 
-=head2 default_resultset
-
-Determines the default name of the resultset class from the Model / View or
-Controller class.
-
-=cut
-
 sub default_resultset {
     my ($self, $c) = @_;
     my $class = ref $self;
     my $prefix;
+    
+    # Copied from Catalyst::Utils
     if($class =~ /^.+?::([MVC]|Model|View|Controller)::(.+)$/ ) {
         $prefix = $2;
     }
     return $prefix;
 }
-
-=head2 list
-
-List Action which returns the data for a ExtJS grid.
-
-=cut
 
 sub list : Chained('/') NSListPathPart Args {
     my ( $self, $c ) = @_;
@@ -222,15 +75,24 @@ sub list : Chained('/') NSListPathPart Args {
 
     my $rs = $c->model($model);
     my @args = @{$c->req->args};
-    unshift(@args, $self->config->{default_rs_method});
+    unshift(@args, $self->_extjs_config->{default_rs_method});
     for my $rs_method (@args) {
         next unless($rs_method);
         if($rs_method && $rs_method ne "all" && DBIx::Class::ResultSet->can($rs_method)) {
             $c->log->warn('Possibly malicious method "'.$rs_method.'" on resultset '.$rs_method.' has not been called');
             next;
         }
-        my ($m, @args) = split(/,/, $rs_method);
-        $rs = $rs->$m($c,@args);
+        my ($m, @params) = split(/,/, $rs_method);
+        if($rs->can($m)) {
+            if($c->debug) {
+                my $debug = qq(Calling resultset method $m);
+                $debug .= q( with arguments ').join(q(', '), @params).q(') if(@params);
+                $c->log->debug($debug);
+            }
+            $rs = $rs->$m($c,@params);
+        } else {
+            $c->log->debug(qq(Resultset method $m could not be found)) if $c->debug;
+        }
     }
     $self->status_ok( $c, entity => $form->grid_data([$rs->all]));
     # list
@@ -244,19 +106,25 @@ REST Action which returns works with single model entites.
 
 sub object : Chained('/') NSPathPart Args ActionClass('REST') {
     my ( $self, $c, $id ) = @_;
+
+        
     croak $self->base_file." cannot be found" unless(-e $self->base_file);
     
     my $config = Config::Any->load_files( {files => [ $self->base_file ], use_ext => 1, flatten_to_hash => 0 } );
-    $config = { %{$self->_extjs_config->{model_config}}, %{$config->[0]->{$self->base_file}->{model_config} || {}} };
+    $config = { %{$self->_extjs_config->{model_config}}, %{$config->{$self->base_file}->{model_config} || {}} };
     $config->{resultset} ||= $self->default_resultset;
     croak "Need resultset and schema" unless($config->{resultset} && $config->{schema});
     $c->stash->{extjs_formfu_model_config} = $config;
     
     my $object = $c->model(join('::', $config->{schema}, $config->{resultset}));
-    
-    if($self->config->{default_rs_method}) {
-        my $rs = $self->config->{default_rs_method};
-        $object = $object->$rs($c);
+        
+    if(my $rs = $self->_extjs_config->{default_rs_method}) {
+        if($object->can($rs)) {
+            $c->log->debug(qq(Calling default resultset method $rs)) if($c->debug);
+            $object = $object->$rs($c);
+        } else {
+            $c->log->debug(qq(Default resultset method $rs cannot be found)) if($c->debug);
+        }
     }
     
     my $method = $config->{find_method} || 'find';
@@ -264,6 +132,7 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') {
     if (defined $id && defined $object) {
 # TODO
 # What happens if id does not exist in db or undefined
+# this is handled by each request method (mo)
         $object = $object->$method($id);
         $c->stash->{object} = $object;
     }
@@ -302,13 +171,6 @@ sub object_PUT {
         $self->status_ok( $c, entity => $form->validation_response );
     }
 }
-
-=head2 object_PUT_or_POST
-
-Inernal method for REST Actions to handle the update of single model entity
-with PUT or POST requests.
-
-=cut
 
 sub object_PUT_or_POST {
     my ($self, $c, $form, $object) = @_;
@@ -375,15 +237,19 @@ REST Action to get the data of a single model entity with a GET request.
 
 sub object_GET {
     my ( $self, $c ) = @_;
+        
     my $form = $self->get_form($c);
     $form->load_config_file( $self->path_to_forms('get') );
 
     my $config = $c->stash->{extjs_formfu_model_config};
 
-    $form->process( $c->req )
-        if (defined $config->{call_process_on_GET} && $config->{call_process_on_GET});
+    $form->process( $c->req );
     
-    $self->status_ok( $c, entity => $form->form_data( $c->stash->{object} ) );
+    if($c->stash->{object}) {
+        $self->status_ok( $c, entity => $form->form_data( $c->stash->{object} ) );
+    } else {
+        $self->status_not_found($c, message => 'Object could not be found.');
+    }
 }
 
 =head2 object_DELETE
@@ -394,8 +260,12 @@ REST Action to delete a single model entity with a DELETE request.
 
 sub object_DELETE {
     my ( $self, $c ) = @_;
-    $c->stash->{object}->delete;
-    $self->status_ok( $c, entity => { message => "Object has been deleted" } );
+    if($c->stash->{object}) {
+        $c->stash->{object}->delete;
+        $self->status_ok( $c, entity => { message => "Object has been deleted" } );
+    } else {
+        $self->status_not_found($c, message => 'Object could not be found.');
+    }
 }
 
 =head2 path_to_forms
@@ -459,12 +329,6 @@ sub list_base_file {
     return -e $file ? $file : $self->base_file;
 }
 
-=head2 get_form
-
-Returns a new ExtJS FormFu class and sets the model config options.
-
-=cut
-
 sub get_form {
     my ($self, $c) = @_;
     #return $self->_form if($self->_form);
@@ -479,14 +343,6 @@ sub get_form {
     return $form;
 }
 
-=head2 handle_uploads
-
-Handles uploaded files by assigning the filehandle to the column accessor of
-the DBIC row object.
-
-=cut
-
-
 sub handle_uploads {
     my ($self, $c, $row, $form) = @_;
     my $uploads;
@@ -498,14 +354,132 @@ sub handle_uploads {
     $row->update;
 }
 
+
+sub begin : ActionClass('+CatalystX::Action::ExtJS::Deserialize') {
+    my ( $self, $c ) = @_;
+    $self->next::method($c);
+}
+
+sub end : ActionClass('Serialize') {
+    my ( $self, $c ) = @_;
+    $self->next::method($c);
+    if ( $self->is_extjs_upload($c) ) {
+        my $stash_key = (
+              $self->config->{'serialize'}
+            ? $self->config->{'serialize'}->{'stash_key'}
+            : $self->config->{'stash_key'}
+          )
+          || 'rest';
+        my $output;
+        eval { $output = JSON->new->encode( $c->stash->{$stash_key} ); };
+
+        $c->res->content_type('text/html');
+        $c->res->output( encode_entities($output) );
+    }
+}
+
+sub _parse_NSPathPart_attr {
+    my ( $self, $c ) = @_;
+    return ( PathPart => $self->action_namespace );
+}
+
+
+sub _parse_NSListPathPart_attr {
+    my ( $self, $c ) = @_;
+    if($self->config->{list_namespace}) {
+        return ( PathPart => $self->config->{list_namespace} )
+    } else {
+        my @path = split( /\//, $self->action_namespace );
+        $path[-1] = Lingua::EN::Inflect::PL(my $name = $path[-1]);
+        $path[-1] = "list_".$path[-1]
+          if($name eq $path[-1]);
+    
+        return ( PathPart => join('/', @path) );
+    }
+}
+
 1;
 
 __END__
 
+=head1 NAME
+
+CatalystX::Controller::ExtJS::REST
+
+=head1 SYNOPSIS
+
+=head1 CONFIGURATION
+
+Local configuration:
+  
+  __PACKAGE__->config({ ... });  
+
+
+Global configuration for all controllers which use CatalystX::Controller::ExtJS::REST:
+
+  MyApp->config( {
+    CatalystX::Controller::ExtJS::REST => 
+      { key => value}
+  } );
+
+=head2 find_method
+
+Use a different method when looking for existing model rows.
+
+Defaults to 'find'.
+
+=head2 respond_with_model_values
+
+Get the values that are send back to ExtJS if a valid form is submitted
+from model.
+
+Defaults to false.
+
+=head2 default_rs_method
+
+This resultset method is called on every request. This is useful if you want to 
+restrict the resultset, e. g. only find objects which are associated to the
+current user.
+
+Nothing is called if the specified method does not exist.
+
+This defaults to C<extjs_rest_[controller namespace]>.
+
+A controller C<MyApp::Controller::User> expects a resultset method
+C<extjs_rest_user>.
+
+
+=head2 form_base_path
+
+Defaults to C<root/forms>
+
+=head2 list_base_path
+
+Defaults to C<root/lists>
+
+=head2 model_config
+
+=head3 schema
+
+Defaults to C<DBIC>
+
+=head3 resultset
+
+Defaults to L</default_resultset>
+
+=head2 namespace
+
+Defaults to L<Catalyst::Controller/namespace>
+
+=head2 list_namespace
+
+Defaults to the plural form of L</namespace>. If this is the same as L</namespace> C<list_> is prepended.
+
+
 =head1 LIMITATIONS
 
-This module is limited to L<HTML::FormFu> as form processing engine and
-L<DBIx::Class> as ORM.
+This module is limited to L<HTML::FormFu> as form processing engine,
+L<DBIx::Class> as ORM and L<Catalyst> as web application framework.
 
 
 
@@ -655,8 +629,74 @@ If you want to handle uploads yourself, overwrite L</handle_uploads>
 
 But this should to be part of the model actually.
 
+Since you cannot upload files with an C<XMLHttpRequest> ExtJS creates an iframe and issues
+a C<POST> request in there. If you need to make a C<PUT> request you have to tunnel the
+desired method using a hidden field, by using the C<params> config option of 
+C<Ext.form.Action.Submit> or C<extraParams> in C<Ext.Ajax.request>. The name of that
+parameter has to be C<x-tunneled-method>.
+
 Make sure you do not include a file field in your C<GET> form definition. It will
 cause a security error in your browser because it is not allowed set the value of
 a file field.
 
+=head1 PUBLIC METHODS
 
+=head2 get_form
+
+Returns a new L<HTML::FormFu::ExtJS> class, sets the model config options and the
+request type to C<Catalyst>.
+
+=head2 list
+
+List Action which returns the data for a ExtJS grid.
+
+=head2 object_PUT_or_POST
+
+Inernal method for REST Actions to handle the update of single model entity
+with PUT or POST requests.
+
+This method is called before the form is being processed. This allows to add or
+remove form elements.
+
+=head2 handle_uploads
+
+Handles uploaded files by assigning the filehandle to the column accessor of
+the DBIC row object.
+
+=head2 is_extjs_upload
+
+Returns true if the current request looks like a request from ExtJS and has
+multipart form data, so usually an upload. This requires that you add a C<x-requested-by> parameter to your
+form which has the value C<ExtJS>. This can be done either by adding a hidden form field,
+by using the C<params> config option of ExtJS C<Ext.form.Action.Submit> or C<extraParams> in C<Ext.Ajax.request>.
+
+=head2 default_resultset
+
+Determines the default name of the resultset class from the Model / View or
+Controller class.
+
+
+=head1 PRIVATE METHODS
+
+These methods are private. Please don't overwrite those unless you know what you are doing.
+
+=head2 begin
+
+Run this code before any action in this controller. It sets the C<ActionClass> to L<CatalystX::Action::ExtJS::Deserialize>.
+This C<ActionClass> makes sure that no deserialization happens if the body's content is a file upload.
+
+=cut
+
+=head2 end
+
+If the request contains a file upload field, extjs expects the json response to be serialized and 
+returned in a document with the C<Content-type> set to C<text/html>.
+
+=head2 _parse_NSPathPart_attr
+
+=head2 _parse_NSListPathPart_attr
+
+=head2 _extjs_config
+
+This accessor contains the configuration options for this controller. It is created by merging
+C<__PACKAGE__->config> with the default values.
