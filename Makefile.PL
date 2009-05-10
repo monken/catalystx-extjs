@@ -1,7 +1,7 @@
 use inc::Module::Install;
 
-name     'CatalystX-Controller-ExtJS';
-all_from 'lib/CatalystX/Controller/ExtJS.pm';
+name     'CatalystX-ExtJS';
+all_from 'lib/CatalystX/ExtJS.pm';
 author   'Moritz Onken <onken@netcubed.de>';
 license  'perl';
 

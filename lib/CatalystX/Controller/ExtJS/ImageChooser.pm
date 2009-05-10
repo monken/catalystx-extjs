@@ -10,12 +10,6 @@ use base 'Catalyst::Controller', 'Class::Accessor::Fast';
 
 __PACKAGE__->mk_accessors('_extjs_ic_config');
 
-=head1 PUBLIC METHODS
-
-=head2 new
-
-=cut
-
 sub new {
     my $self = shift->next::method(@_);
     my ($c) = @_;
@@ -33,11 +27,6 @@ sub _parse_NSPathPart_attr {
     my ( $self, $c ) = @_;
     return ( PathPart => $self->action_namespace );
 }
-
-
-=head2 foo
-
-=cut
 
 sub foo : Chained('/') NSPathPart Args {
     my ( $self, $c ) = @_;

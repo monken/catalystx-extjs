@@ -1,4 +1,4 @@
-use Test::More  tests => 18;
+use Test::More  tests => 19;
 
 use strict;
 use warnings;
@@ -25,6 +25,8 @@ my $res = $mech->request(POST '/user', [name => 'bar', password => 'foo']);
 ok($json = JSON::decode_json($res->content), 'response is JSON response');
 
 is($json->{success}, 1, 'submission was successful');
+
+is($res->header('location'), 'http://localhost/user/1', 'user location is set');
 
 $mech->get_ok('/users', undef, 'request list of users');
 

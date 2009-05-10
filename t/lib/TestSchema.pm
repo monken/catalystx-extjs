@@ -12,7 +12,7 @@ __PACKAGE__->load_namespaces;
 
 sub connect {
     my $db = Path::Class::File->new('t/var/test.db');
-    $db->remove if(-e $db);
+    #$db->remove if(-e $db);
     return shift->next::method('dbi:SQLite:dbname=t/var/test.db');
 }
 

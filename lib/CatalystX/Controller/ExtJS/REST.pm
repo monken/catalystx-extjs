@@ -74,6 +74,7 @@ sub list : Chained('/') NSListPathPart Args {
     my $model = join('::', $config->{schema}, $config->{resultset});
 
     my $rs = $c->model($model);
+    $rs = $self->paging_rs($c, $form, $rs);
     my @args = @{$c->req->args};
     unshift(@args, $self->_extjs_config->{default_rs_method});
     for my $rs_method (@args) {
@@ -90,12 +91,40 @@ sub list : Chained('/') NSListPathPart Args {
                 $c->log->debug($debug);
             }
             $rs = $rs->$m($c,@params);
-        } else {
-            $c->log->debug(qq(Resultset method $m could not be found)) if $c->debug;
+        } elsif($c->debug) {
+            $c->log->debug(qq(Resultset method $m could not be found));
         }
     }
-    $self->status_ok( $c, entity => $form->grid_data([$rs->all]));
+    
+    my $grid_data = $form->grid_data([$rs->all]);
+    my $count = $rs->search(undef, { rows => undef, offset => undef })->count;
+    $grid_data->{results} = $count;
+    
+    $self->status_ok( $c, entity => $grid_data);
     # list
+}
+
+sub paging_rs : Private {
+    my ($self, $c, $form, $rs) = @_;
+    my $params = $c->req->params;
+    
+    my $start = abs(int($params->{start} || 0));
+    
+    my $limit = abs(int($params->{limit} || 0));
+
+    return $rs if($start == 0 && $limit == 0);
+
+    my @direction = grep { $_ eq (lc($params->{dir}) || 'asc') } qw(asc desc);
+    my $direction = q{-}.(shift @direction);
+    
+    my $sort = $params->{sort} || undef;
+    
+    undef $sort unless($form->get_all_element({ nested_name => $sort }));
+    
+    my $paged = $rs->search(undef, { offset => $start, rows => $limit || undef});
+    $paged = $paged->search(undef, { order_by => { $direction => $sort } })
+      if $sort;
+    return $paged;
 }
 
 =head2 object
@@ -219,7 +248,6 @@ sub object_POST {
         $self->status_created(
             $c,
             location => $c->uri_for( '', $row->id ),
-#            location => $c->req->uri->as_string . "/" . $row->id,
             entity   => $response
         );
     }
