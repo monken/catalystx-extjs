@@ -151,17 +151,14 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') {
         if($object->can($rs)) {
             $c->log->debug(qq(Calling default resultset method $rs)) if($c->debug);
             $object = $object->$rs($c);
-        } else {
-            $c->log->debug(qq(Default resultset method $rs cannot be found)) if($c->debug);
+        } elsif($c->debug) {
+            $c->log->debug(qq(Default resultset method $rs cannot be found));
         }
     }
-    
+
+    # Get row object
     my $method = $config->{find_method} || 'find';
-    
     if (defined $id && defined $object) {
-# TODO
-# What happens if id does not exist in db or undefined
-# this is handled by each request method (mo)
         $object = $object->$method($id);
         $c->stash->{object} = $object;
     }
@@ -177,6 +174,12 @@ sub object_PUT {
     my ( $self, $c ) = @_;
     my $object = $c->stash->{object};
     my $config = $c->stash->{extjs_formfu_model_config};
+
+    # Check if row object exists
+    if(!$c->stash->{object}) {
+        $self->status_not_found($c, message => 'Object could not be found.');
+        return;
+    }
 
     my $form = $self->get_form($c);
     $form->load_config_file( $self->path_to_forms('put') );
