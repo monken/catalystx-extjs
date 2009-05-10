@@ -598,6 +598,10 @@ This can be set to the name of a custom function function which is defined with 
 It needs to take the primary key as first parameter.
 Defaults to 'find'.
 
+To create and use a custom resultset method you can subclass L<DBIx::Class::ResultSet>,
+require that module in your db table definition classes and tell DBIC to use it in that module by calling
+C<< __PACKAGE__->resultset_class('Your::Custom::Resultset') >>.
+
 =back
 
 =head2 Handling Uploads
