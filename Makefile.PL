@@ -6,7 +6,7 @@ author   'Moritz Onken <onken@netcubed.de>';
 license  'perl';
 
 
-requires 'Config::Any';
+requires 'Config::Any' => '0.17';
 requires 'HTML::FormFu::ExtJS' => '0.07';
 requires 'Path::Class';
 requires 'HTML::Entities';
