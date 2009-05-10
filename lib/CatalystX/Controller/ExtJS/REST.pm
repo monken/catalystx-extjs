@@ -464,6 +464,10 @@ Defaults to 'find'.
 Get the values that are send back to ExtJS if a valid form is submitted
 from model.
 
+This is usefull if your DBIC clases do some post processing, like setting
+IDs or UUIDs/GUIDs or calculating some values, to ensure that the data,
+which is send back to the user is syncronized with the database.
+
 Defaults to false.
 
 =head2 default_rs_method
