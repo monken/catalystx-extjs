@@ -1,4 +1,4 @@
-use Test::More  tests => 2;
+use Test::More  tests => 4;
 
 use strict;
 use warnings;
@@ -12,8 +12,9 @@ use Test::WWW::Mechanize::Catalyst 'MyApp';
 
 my $mech = Test::WWW::Mechanize::Catalyst->new();
 
-my $res = $mech->get('/skipend');
+my $res = $mech->get('/skipend/form/edit_record');
 
-is($res->header('status'), 404, 'not found');
-
-$mech->content_is('foo');
+is($res->header('status'), 200, 'status ok');
+$mech->content_contains('MyApp.Forms.EditRecord.skipend_test', 'contains form name');
+$mech->content_contains("this.rest_url = '/skipend/'", 'contains action');
+$mech->content_contains('{"hideLabel":true,"name":"id","fieldLabel":null,"xtype":"hidden"},{"hideLabel":true,"name":"password","fieldLabel":null,"xtype":"textfield"},{"hideLabel":true,"name":"name","fieldLabel":null,"xtype":"textfield"}', 'contains fields');
