@@ -192,14 +192,11 @@ sub object_PUT {
         my $row = $form->model->update($object);
         $self->handle_uploads($c, $row, $form);
 
-        my $response = (defined $config->{respond_with_model_values}
-                && $config->{respond_with_model_values})
-            ? $form->form_data( $row )
-            : $form->validation_response;
-
-        $self->status_ok( $c, entity => $response );
+        # get values from model
+        $self->status_ok( $c, entity => $form->form_data( $row ) );
     }
     else {
+        # return form values and error messages
         $self->status_ok( $c, entity => $form->validation_response );
     }
 }
@@ -243,18 +240,15 @@ sub object_POST {
         my $row = $form->model->create;
         $self->handle_uploads($c, $row, $form);
 
-        my $response = (defined $config->{respond_with_model_values}
-                && $config->{respond_with_model_values})
-            ? $form->form_data( $row )
-            : $form->validation_response;
-
+        # get values from model
         $self->status_created(
             $c,
             location => $c->uri_for( '', $row->id ),
-            entity   => $response
+            entity   => $form->form_data( $row )
         );
     }
     else {
+        # return form values and error messages
         $self->status_ok( $c, entity => $form->validation_response );
     }
 

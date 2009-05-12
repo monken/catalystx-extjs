@@ -24,7 +24,7 @@ my $res = $mech->request(POST '/user', [name => 'bar', password => 'foo']);
 
 ok($json = JSON::decode_json($res->content), 'response is JSON response');
 
-is($json->{success}, 1, 'submission was successful');
+is($json->{success}, 'true', 'submission was successful');
 
 is($res->header('location'), 'http://localhost/user/1', 'user location is set');
 
@@ -47,7 +47,7 @@ ok($mech->request($request), 'change user name');
 
 ok($json = JSON::decode_json($mech->content), 'response is JSON response');
 
-is($json->{success}, 1, 'change was successful');
+is($json->{success}, 'true', 'change was successful');
 
 is($json->{data}->{name}, 'bas', 'user name has changed');
 

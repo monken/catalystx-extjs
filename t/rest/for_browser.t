@@ -18,7 +18,7 @@ my $res = $mech->request(POST '/user', [name => 'bar', password => 'foo']);
 
 ok(my $json = JSON::decode_json($res->content), 'response is JSON response');
 
-is($json->{success}, 1, 'submission was successful');
+is($json->{success}, 'true', 'submission was successful');
 
 $res = $mech->request(POST '/user/1?x-tunneled-method=DELETE');
 
