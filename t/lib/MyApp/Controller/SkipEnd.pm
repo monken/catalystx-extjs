@@ -8,14 +8,6 @@ __PACKAGE__->config(
     list_base_path => [qw(t root lists)],
 );
 
-# sub object_GET {
-#     my ($self, $c, @args) = @_;
-#     $self->maybe::next::method($c, @args);
-#     
-#     $c->res->body('foo');
-#     
-# }
-
 sub load_form : Chained('/') NSFormPathPart CaptureArgs(0) {
     my ( $self, $c ) = @_;
 
