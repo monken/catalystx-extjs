@@ -16,6 +16,7 @@ use HTML::FormFu::Util qw( _merge_hashes );
 use Path::Class;
 use HTML::Entities;
 use JSON qw(encode_json);
+use Scalar::Util qw/ weaken /;
 
 use Lingua::EN::Inflect;
 
@@ -31,10 +32,16 @@ sub _extjs_config_builder {
     my $default_rs_method = lc($self->default_resultset);
     $default_rs_method =~ s/::/_/g;
     
-    my $defaults = { model_config => { schema => 'DBIC', resultset => $self->default_resultset },
-                     form_base_path => [qw(root forms)],
-                     list_base_path => [qw(root lists)],
-                     default_rs_method => 'extjs_rest_'.$default_rs_method };
+    my $defaults = {
+        model_config => {
+            schema => 'DBIC',
+            resultset => $self->default_resultset
+        },
+        form_base_path    => [qw(root forms)],
+        list_base_path    => [qw(root lists)],
+        default_rs_method => 'extjs_rest_'.$default_rs_method,
+        context_stash     => 'context'
+    };
     my $self_config   = $self->config || {};
     my $parent_config = $c->config->{'ControllerX::ExtJS::REST'} || {};
 
@@ -365,6 +372,14 @@ sub get_form {
             $form->stash->{$model} = $c->model( $model_stash->{$model} );
     }
     $form->model_config($self->_extjs_config->{model_config});
+
+    # To allow your form validation packages, etc, access to the catalyst
+    # context, a weakened reference of the context is copied into the form's
+    # stash.
+    my $context_stash = $self->_extjs_config->{context_stash};
+    $form->stash->{$context_stash} = $c;
+    weaken( $form->stash->{$context_stash} );
+
     return $form;
 }
 
@@ -444,7 +459,7 @@ Global configuration for all controllers which use CatalystX::Controller::ExtJS:
 
   MyApp->config( {
     CatalystX::Controller::ExtJS::REST => 
-      { key => value}
+      { key => value }
   } );
 
 =head2 find_method
@@ -477,6 +492,16 @@ This defaults to C<extjs_rest_[controller namespace]>.
 A controller C<MyApp::Controller::User> expects a resultset method
 C<extjs_rest_user>.
 
+=head2 context_stash
+
+To allow your form validation packages, etc, access to the catalyst context, 
+a weakened reference of the context is copied into the form's stash.
+
+    $form->stash->{context};
+
+This setting allows you to change the key name used in the form stash.
+
+Default value: C<context>
 
 =head2 form_base_path
 
