@@ -104,6 +104,9 @@ sub list : Chained('/') NSListPathPart Args {
     }
     
     my $grid_data = $form->grid_data([$rs->all]);
+    if ($self->_extjs_config->{no_list_metadata}) {
+        delete $grid_data->{metaData};
+    }
     my $count = $rs->search(undef, { rows => undef, offset => undef })->count;
     $grid_data->{results} = $count;
     
@@ -510,6 +513,12 @@ Defaults to C<root/forms>
 =head2 list_base_path
 
 Defaults to C<root/lists>
+
+=head2 no_list_metadata
+
+If set to a true value there will be no meta data send with lists.
+
+Defaults to undef. That means the metaData hash will be send by default.
 
 =head2 model_config
 
