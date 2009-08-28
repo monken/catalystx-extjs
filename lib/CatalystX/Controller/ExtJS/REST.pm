@@ -136,12 +136,6 @@ sub paging_rs : Private {
     return $paged;
 }
 
-=head2 object
-
-REST Action which returns works with single model entites.
-
-=cut
-
 sub object : Chained('/') NSPathPart Args ActionClass('REST') {
     my ( $self, $c, $id ) = @_;
 
@@ -172,12 +166,6 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') {
         $c->stash->{object} = $object;
     }
 }
-
-=head2 object_PUT
-
-REST Action to update a single model entity with a PUT request.
-
-=cut
 
 sub object_PUT {
     my ( $self, $c ) = @_;
@@ -227,12 +215,6 @@ sub object_PUT_or_POST {
 
 }
 
-=head2 object_POST
-
-REST Action to create a single model entity with a POST request.
-
-=cut
-
 sub object_POST {
     my ( $self, $c ) = @_;
 
@@ -263,12 +245,6 @@ sub object_POST {
 
 }
 
-=head2 object_GET
-
-REST Action to get the data of a single model entity with a GET request.
-
-=cut
-
 sub object_GET {
     my ( $self, $c ) = @_;
         
@@ -286,12 +262,6 @@ sub object_GET {
     }
 }
 
-=head2 object_DELETE
-
-REST Action to delete a single model entity with a DELETE request.
-
-=cut
-
 sub object_DELETE {
     my ( $self, $c ) = @_;
     if($c->stash->{object}) {
@@ -302,35 +272,17 @@ sub object_DELETE {
     }
 }
 
-=head2 path_to_forms
-
-Returns the path to the specific form config file or the default form config
-file if the specfic one can not be found.
-
-=cut
 
 sub path_to_forms {
     my $self = shift;
-    my $file = Path::Class::File->new($self->base_path,  (shift) . '.yml');
+    my $file = Path::Class::File->new($self->base_path . '_' . (shift) . '.yml');
     return -e $file ? $file : $self->base_file;
 }
-
-=head2 base_path
-
-Returns the path in which form config files will be searched.
-
-=cut
 
 sub base_path {
     my $self = shift;
     return Path::Class::Dir->new( @{$self->_extjs_config->{form_base_path}}, split( /\//, $self->action_namespace ) );
 }
-
-=head2 base_file
-
-Returns the path to the default form config file.
-
-=cut
 
 sub base_file {
     my $self = shift;
@@ -338,23 +290,10 @@ sub base_file {
     return $self->base_path->parent->file((pop @path) . '.yml');
 }
 
-=head2 list_base_path
-
-Returns the path in which form config files for grids will be searched.
-
-=cut
-
 sub list_base_path {
     my $self = shift;
     return Path::Class::Dir->new( @{$self->_extjs_config->{list_base_path}}, split( /\//, $self->action_namespace ) );
 }
-
-=head2 list_base_file
-
-Returns the path to the specific form config file for grids or the default
-form config file if the specfic one can not be found.
-
-=cut
 
 sub list_base_file {
     my $self = shift;
@@ -450,6 +389,12 @@ CatalystX::Controller::ExtJS::REST
 
 =head1 SYNOPSIS
 
+  package MyApp::Controller::User;
+  use base qw(CatalystX::Controller::ExtJS::REST);
+  
+  __PACKAGE__->config({ ... });
+  1;
+
 =head1 CONFIGURATION
 
 Local configuration:
@@ -466,20 +411,11 @@ Global configuration for all controllers which use CatalystX::Controller::ExtJS:
 
 =head2 find_method
 
-Use a different method when looking for existing model rows.
+The method to call on the resultset to get an existing row object.
+This can be set to the name of a custom function function which is defined with the (custom) resultset class.
+It needs to take the primary key as first parameter.
 
 Defaults to 'find'.
-
-=head2 respond_with_model_values
-
-Get the values that are send back to ExtJS if a valid form is submitted
-from model.
-
-This is usefull if your DBIC clases do some post processing, like setting
-IDs or UUIDs/GUIDs or calculating some values, to ensure that the data,
-which is send back to the user is syncronized with the database.
-
-Defaults to false.
 
 =head2 default_rs_method
 
@@ -562,10 +498,9 @@ Then you will want to create the following files:
   root/
        forms/
              user.yml
-             user/
-                  get.yml
-                  post.yml
-                  put.yml
+             user_get.yml
+             user_post.yml
+             user_put.yml
        lists/
              user.yml
 
@@ -597,7 +532,7 @@ You can override these values in the form config files:
       - name: name
       - name: forename
       
-  # root/forms/user/get.yml and friends
+  # root/forms/user_get.yml and friends
   ---
     load_config_file: root/forms/user.yml
 
@@ -628,7 +563,7 @@ You can even supply arguments to that method using a komma separated list:
 You can chain those method calls to any length. You cannot access resultset method which are
 inherited from L<DBIx::Class::ResultSet>, except C<all>. This is a security restriction because
 an attacker could call C<http://localhost:3000/users/delete> which will lead to 
-C<< $c->model('DBIC::Users')->delete >>. This will remove all rows from C<DBIC::Users>.
+C<< $c->model('DBIC::Users')->delete >>. This would remove all rows from C<DBIC::Users>!
 
 To define a default resultset method which gets called every time the controller hits the
 result table, set:
@@ -645,26 +580,13 @@ This will lead to the following chain:
   # http://localhost:3000/user/1234
   
   $c->model('DBIC::Users')->restrict($c)->find(1234);
+  
+The C<default_rs_method> defaults to the value of L</default_rs_method>. If it is not set 
+by the configuration, this controller tries to call C<extjs_rest_$class> (i.e. C<extjs_rest_user>).
 
 To create, delete and modify C<user> objects, simply C<POST>, C<DELETE> or C<PUT> to
 the url C</user>. C<POST> and C<DELETE> require that you add the id to that url,
 e. g. C</user/1234>.
-
-=head2 Configuration options
-
-=over
-
-=item find_method
-The method to call on the resultset to get an existing row object.
-This can be set to the name of a custom function function which is defined with the (custom) resultset class.
-It needs to take the primary key as first parameter.
-Defaults to 'find'.
-
-To create and use a custom resultset method you can subclass L<DBIx::Class::ResultSet>,
-require that module in your db table definition classes and tell DBIC to use it in that module by calling
-C<< __PACKAGE__->resultset_class('Your::Custom::Resultset') >>.
-
-=back
 
 =head2 Handling Uploads
 
@@ -721,8 +643,8 @@ List Action which returns the data for a ExtJS grid.
 Inernal method for REST Actions to handle the update of single model entity
 with PUT or POST requests.
 
-This method is called before the form is being processed. This allows to add or
-remove form elements.
+This method is called before the form is being processed. To add or remove form elements
+dynamically, this would be the right place.
 
 =head2 handle_uploads
 
@@ -740,6 +662,48 @@ by using the C<params> config option of ExtJS C<Ext.form.Action.Submit> or C<ext
 
 Determines the default name of the resultset class from the Model / View or
 Controller class.
+
+=head2 list_base_path
+
+Returns the path in which form config files for grids will be searched.
+
+=head2 list_base_file
+
+Returns the path to the specific form config file for grids or the default
+form config file if the specfic one can not be found.
+
+=head2 object
+
+REST Action which returns works with single model entites.
+
+=head2 object_PUT
+
+REST Action to update a single model entity with a PUT request.
+
+=head2 object_POST
+
+REST Action to create a single model entity with a POST request.
+
+=head2 object_GET
+
+REST Action to get the data of a single model entity with a GET request.
+
+=head2 object_DELETE
+
+REST Action to delete a single model entity with a DELETE request.
+
+=head2 path_to_forms
+
+Returns the path to the specific form config file or the default form config
+file if the specfic one can not be found.
+
+=head2 base_path
+
+Returns the path in which form config files will be searched.
+
+=head2 base_file
+
+Returns the path to the default form config file.
 
 
 =head1 PRIVATE METHODS
@@ -765,4 +729,20 @@ returned in a document with the C<Content-type> set to C<text/html>.
 =head2 _extjs_config
 
 This accessor contains the configuration options for this controller. It is created by merging
-C<__PACKAGE__->config> with the default values.
+C<< __PACKAGE__->config >> with the default values.
+
+=head1 AUTHOR
+
+  Moritz Onken
+  
+  Mario Minati
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is Copyright (c) 2009 by Moritz Onken.
+
+This is free software, licensed under:
+
+  The (three-clause) BSD License
+
+=cut

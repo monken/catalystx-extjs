@@ -83,11 +83,11 @@ CatalystX::Controller::ExtJS::ImageChooser - Controller for the ExtJS ImageChoos
   
   # use a JSON view
   
-  # output is avaiable at /images
+  # output is available at /images
   
   1;
   
-Example at L<http://extjs.com/examples/view/chooser.html>.
+Example at L<http://www.extjs.com/deploy/dev/examples/view/chooser.html>.
   
 =head1 DESCRIPTION
 
@@ -96,5 +96,17 @@ the data in this way.
 
 You can even look in subdirectories by simply adding the directory name to the url. Example: C</images/subdir> gives you the
 files from C<root/static/images/subdir>. You cannot access directories, which are parents of the base directory.
+
+=head1 AUTHOR
+
+  Moritz Onken
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is Copyright (c) 2009 by Moritz Onken.
+
+This is free software, licensed under:
+
+  The (three-clause) BSD License
 
 =cut
