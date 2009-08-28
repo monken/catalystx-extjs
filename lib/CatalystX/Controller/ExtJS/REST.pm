@@ -1,10 +1,8 @@
 package CatalystX::Controller::ExtJS::REST;
 
-use strict;
-use warnings;
-
 
 use base qw(Catalyst::Controller::REST);
+
 #with 'Catalyst::Component::InstancePerContext';
 
 use Config::Any;
@@ -23,6 +21,7 @@ use Lingua::EN::Inflect;
 our $VERSION = '0.01';
 
 use Moose;
+
 
 has '_extjs_config' => ( is => 'rw', isa => 'HashRef', builder => '_extjs_config_builder', lazy => 1 );
 
@@ -132,7 +131,7 @@ sub paging_rs : Private {
     undef $sort unless($form->get_all_element({ nested_name => $sort }));
     
     my $paged = $rs->search(undef, { offset => $start, rows => $limit || undef});
-    $paged = $paged->search(undef, { order_by => { $direction => $sort } })
+    $paged = $paged->search(undef, { order_by => [ { $direction => $sort } ] })
       if $sort;
     return $paged;
 }

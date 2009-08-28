@@ -1,4 +1,4 @@
-use Test::More  tests => 223;
+use Test::More;
 
 use strict;
 use warnings;
@@ -9,17 +9,20 @@ use JSON;
 use lib qw(t/lib);
 
 use TestSchema;
+use MyApp;
+
+my $schema = MyApp->model('DBIC')->schema;
+
+foreach my $i (1..200) {
+    ok($schema->resultset('User')->create({name => sprintf('%04d', $i), password => 'password'.sprintf('%04d', 200-$i)}));   
+}
+
+is($schema->resultset('User')->count, 200, '200 users in db');
 
 
 use Test::WWW::Mechanize::Catalyst 'MyApp';
 
 my $mech = Test::WWW::Mechanize::Catalyst->new();
-
-my $schema = TestSchema->connect;
-
-foreach my $i (1..200) {
-    ok($schema->resultset('User')->create({name => sprintf('%04d', $i), password => 'password'.sprintf('%04d', 200-$i)}));   
-}
 
 $mech->add_header('Accept' => 'application/json');
 
@@ -69,6 +72,6 @@ ok($json = JSON::decode_json($mech->content), 'response is JSON response');
 
 is($json->{rows}->[0]->{name}, '0190', 'First row is user "0190"');
 
-
+done_testing;
 
 

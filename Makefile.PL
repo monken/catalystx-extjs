@@ -14,6 +14,7 @@ requires 'JSON';
 requires 'Lingua::EN::Inflect';
 requires 'Catalyst::Request::REST::ForBrowsers';
 requires 'Catalyst::Runtime' => '5.8';
+requires 'MooseX::MethodAttributes' => '0.13';
 
 build_requires 'Test::More';
 
