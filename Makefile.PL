@@ -3,7 +3,8 @@ use inc::Module::Install;
 name     'CatalystX-ExtJS';
 all_from 'lib/CatalystX/ExtJS.pm';
 author   'Moritz Onken <onken@netcubed.de>';
-license  'perl';
+license  'BSD';
+version '0.01';
 
 
 requires 'Config::Any' => '0.17';
@@ -14,7 +15,6 @@ requires 'JSON';
 requires 'Lingua::EN::Inflect';
 requires 'Catalyst::Request::REST::ForBrowsers';
 requires 'Catalyst::Runtime' => '5.8';
-requires 'MooseX::MethodAttributes' => '0.13';
 
 build_requires 'Test::More';
 

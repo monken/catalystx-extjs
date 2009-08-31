@@ -394,6 +394,12 @@ CatalystX::Controller::ExtJS::REST
   
   __PACKAGE__->config({ ... });
   1;
+  
+  # set the Accept header to 'application/json' globally
+  
+  Ext.Ajax.defaultHeaders = {
+   'Accept': 'application/json'
+  };
 
 =head1 CONFIGURATION
 
