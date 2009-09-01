@@ -18,7 +18,7 @@ use Scalar::Util qw/ weaken /;
 
 use Lingua::EN::Inflect;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use Moose;
 
@@ -385,7 +385,7 @@ __END__
 
 =head1 NAME
 
-CatalystX::Controller::ExtJS::REST
+CatalystX::Controller::ExtJS::REST - RESTful interface to dbic objects
 
 =head1 SYNOPSIS
 
@@ -644,14 +644,6 @@ request type to C<Catalyst>.
 
 List Action which returns the data for a ExtJS grid.
 
-=head2 object_PUT_or_POST
-
-Inernal method for REST Actions to handle the update of single model entity
-with PUT or POST requests.
-
-This method is called before the form is being processed. To add or remove form elements
-dynamically, this would be the right place.
-
 =head2 handle_uploads
 
 Handles uploaded files by assigning the filehandle to the column accessor of
@@ -689,6 +681,14 @@ REST Action to update a single model entity with a PUT request.
 =head2 object_POST
 
 REST Action to create a single model entity with a POST request.
+
+=head2 object_PUT_or_POST
+
+Internal method for REST Actions to handle the update of single model entity
+with PUT or POST requests.
+
+This method is called before the form is being processed. To add or remove form elements
+dynamically, this would be the right place.
 
 =head2 object_GET
 

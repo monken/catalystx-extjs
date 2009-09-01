@@ -19,7 +19,11 @@ See L<CatalystX::Controller::ExtJS::REST>.
 
 =head1 AUTHOR
 
-  Moritz Onken
+Moritz Onken, C<onken@netcubed.de>
+
+=head1 CONTRIBUTORS
+
+Mario Minati
 
 =head1 COPYRIGHT AND LICENSE
 
