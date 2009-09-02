@@ -4,7 +4,6 @@ name     'CatalystX-ExtJS';
 all_from 'lib/CatalystX/ExtJS.pm';
 author   'Moritz Onken <onken@netcubed.de>';
 license  'BSD';
-version '0.02';
 
 
 requires 'Config::Any' => '0.17';
@@ -15,6 +14,9 @@ requires 'JSON';
 requires 'Lingua::EN::Inflect';
 requires 'Catalyst::Request::REST::ForBrowsers';
 requires 'Catalyst::Runtime' => '5.8';
+requires 'Catalyst:Model::DBIC::Schema';
+requires 'DBIx::Class';
+
 
 test_requires 'Test::WWW::Mechanize::Catalyst';
 

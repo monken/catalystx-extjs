@@ -1,3 +1,11 @@
+package CatalystX::ExtJS;
+
+our $VERSION = '0.04';
+
+1;
+
+__END__
+
 =head1 NAME
 
 CatalystX::ExtJS - Collection of modules for ExtJS

@@ -1,5 +1,7 @@
 package CatalystX::Controller::ExtJS::ImageChooser;
 
+our $VERSION = '0.04';
+
 use strict;
 
 use Carp;

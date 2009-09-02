@@ -1,5 +1,6 @@
 package CatalystX::Controller::ExtJS::REST;
 
+our $VERSION = '0.04';
 
 use base qw(Catalyst::Controller::REST);
 
@@ -17,8 +18,6 @@ use JSON qw(encode_json);
 use Scalar::Util qw/ weaken /;
 
 use Lingua::EN::Inflect;
-
-our $VERSION = '0.02';
 
 use Moose;
 

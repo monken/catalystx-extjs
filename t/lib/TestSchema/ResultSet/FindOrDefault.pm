@@ -1,4 +1,5 @@
-package TestSchema::ResultSet::FindOrDefault;
+package # hide
+TestSchema::ResultSet::FindOrDefault;
 
 use strict;
 use warnings;
