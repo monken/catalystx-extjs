@@ -1,4 +1,8 @@
-Revision history for CatalystX-Controller-ExtJS
+Revision history for CatalystX-ExtJS
+
+0.02 - 0.05
+  - fixed versioning problems
+  - added new prereqs
 
 0.01 2009-08-27
   - first official cpan release

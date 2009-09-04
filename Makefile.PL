@@ -16,6 +16,7 @@ requires 'Catalyst::Request::REST::ForBrowsers';
 requires 'Catalyst::Runtime' => '5.8';
 requires 'Catalyst::Model::DBIC::Schema';
 requires 'DBIx::Class';
+requires 'Catalyst::Action::RenderView';
 
 
 test_requires 'Test::WWW::Mechanize::Catalyst';

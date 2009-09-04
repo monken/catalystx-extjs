@@ -1,6 +1,6 @@
 package CatalystX::Controller::ExtJS::REST;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 use base qw(Catalyst::Controller::REST);
 
@@ -400,6 +400,11 @@ CatalystX::Controller::ExtJS::REST - RESTful interface to dbic objects
    'Accept': 'application/json'
   };
 
+=head1 DESCRIPTION
+
+This controller will make CRUD operations with ExtJS dead simple. Using REST you can update, create, remove, read and list
+objects which are retrieved via L<DBIx::Class>. 
+
 =head1 CONFIGURATION
 
 Local configuration:
@@ -509,8 +514,10 @@ Then you will want to create the following files:
        lists/
              user.yml
 
-Only C<root/forms/user.yml> is required. All other files must not exists. This controller
-will fall back to the so called base file for all requests.
+Only C<root/forms/user.yml> is required. All other files are optional. If ExtJS issues
+a GET request, this controller will first try to find the file C<root/forms/user_get.yml>.
+If this file does not exist, it will fall back to the so called base file 
+C<root/forms/user.yml>.
 
 This controller tries to guess the correct model and resultset. The model defaults
 to C<DBIC> and the resultset is derived from the name of the controller.
