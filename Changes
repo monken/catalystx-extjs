@@ -1,5 +1,8 @@
 Revision history for CatalystX-ExtJS
 
+0.06 2009-09-07
+  - yet another missing prereq
+
 0.02 - 0.05
   - fixed versioning problems
   - added new prereqs
