@@ -10,6 +10,7 @@ requires 'Catalyst::Action::RenderView';
 requires 'Catalyst::Model::DBIC::Schema';
 requires 'Catalyst::Request::REST::ForBrowsers';
 requires 'Catalyst::Runtime' => '5.8';
+requires 'Catalyst::View::TT';
 requires 'Config::Any' => '0.17';
 requires 'DBIx::Class';
 requires 'HTML::Entities';
