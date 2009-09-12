@@ -38,7 +38,15 @@ sub _extjs_config_builder {
         form_base_path    => [qw(root forms)],
         list_base_path    => [qw(root lists)],
         default_rs_method => 'extjs_rest_'.$default_rs_method,
-        context_stash     => 'context'
+        context_stash     => 'context',
+        list_options_validation => {
+            elements => [
+                { name => 'start', constraints => ['Integer', { type => 'MinRange', min => 0}] },
+                { name => 'dir', constraints => { type => 'Set', set => [qw(asc desc ASC DESC)] } },
+                { name => 'limit', constraints => ['Integer', { type => 'Range', min => 0, max => 100 }] },
+                { name => 'sort' },
+            ]
+        },
     };
     my $self_config   = $self->config || {};
     my $parent_config = $c->config->{'ControllerX::ExtJS::REST'} || {};
@@ -69,6 +77,18 @@ sub default_resultset {
     return $prefix;
 }
 
+sub validate_options {
+    my ($self, $c) = @_;
+    my $form = HTML::FormFu::ExtJS->new;
+    $form->populate($self->_extjs_config->{list_options_validation});
+    if(-e $self->list_options_file) {
+        $c->log->debug('found configuration file for parameters');
+        $form->load_config_file($self->list_options_file);
+    }
+    $form->process($c->req->params);
+    return $form;
+}
+
 sub list : Chained('/') NSListPathPart Args {
     my ( $self, $c ) = @_;
 
@@ -77,6 +97,15 @@ sub list : Chained('/') NSListPathPart Args {
     my $config = $form->model_config;
     croak "Need resultset and schema" unless($config->{resultset} && $config->{schema});
     my $model = join('::', $config->{schema}, $config->{resultset});
+    
+    my $validate_options = $self->validate_options($c);
+    
+    if($validate_options->has_errors) {
+        $self->status_bad_request($c, message => 'One ore more parameters did not pass the validation');
+        $c->stash->{rest} = { errors => $validate_options->validation_response->{errors} };
+        $c->detach;
+        return;
+    }
 
     my $rs = $c->model($model);
     $rs = $self->paging_rs($c, $form, $rs);
@@ -299,6 +328,12 @@ sub list_base_file {
     my @path = split( /\//, $self->action_namespace );
     my $file = $self->list_base_path->parent->file((pop @path) . '.yml');
     return -e $file ? $file : $self->base_file;
+}
+
+sub list_options_file {
+    my $self = shift;
+    my @path = split( /\//, $self->action_namespace );
+    return $self->list_base_path->parent->file((pop @path) . '_options.yml');
 }
 
 sub get_form {
@@ -559,6 +594,24 @@ You can access L<http://localhost:3000/users> to get a list of users, which can 
 to feed an ExtJS grid. If you access this URL with your browser you'll get a HTML 
 representation of all users. If you access using a XMLHttpRequest using ExtJS the returned
 value will be a valid JSON string. Listing objects is very flexible and can easily extended.
+There is also a built in validation for query parameters. By default the following 
+parameters are checked for sane defaults:
+
+=over
+
+=item dir (either C<asc>, C<ASC>, c<desc> or C<DESC>)
+
+=item limit (integer, range between 0 and 100)
+
+=item start (positive integer)
+
+=back
+
+You can extend the validation of parameters by providing an additional file. Place it in
+C<root/lists/> and postfix it with C<_options> (e. g. C<root/lists/user_options.yml>). 
+You can overwrite or extend the validation configuration there.
+
+
 Any more attributes you add to the url will result in a call to the corresponding resultset.
 
   # http://localhost:3000/users/active/

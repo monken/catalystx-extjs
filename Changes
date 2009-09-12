@@ -1,5 +1,8 @@
 Revision history for CatalystX-ExtJS
 
+0.08 2009-09-12
+  - introduced parameter validation in list context
+
 0.07 2009-09-10
   - yet another missing prereq
 

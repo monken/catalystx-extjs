@@ -72,6 +72,24 @@ ok($json = JSON::decode_json($mech->content), 'response is JSON response');
 
 is($json->{rows}->[0]->{name}, '0190', 'First row is user "0190"');
 
+# custom options with validation
+
+is(MyApp->controller('User')->list_options_file, 't/root/lists/user_options.yml');
+
+$mech->get('/users?start=10&limit=20&sort=password&dir=asc&ending=1');
+
+ok($json = JSON::decode_json($mech->content), 'response is JSON response');
+
+is(@{$json->{errors}}, 1, 'one error found');
+
+$mech->get_ok('/users?start=10&limit=20&sort=password&dir=ASC&ending=2', undef, 'get users which end with 2');
+
+ok($json = JSON::decode_json($mech->content), 'response is JSON response');
+
+is(@{$json->{rows}}, 10, '10 users found');
+
+map { ok($_->{name} =~ /2$/, 'user ends with 2') } @{$json->{rows}};
+
 done_testing;
 
 
