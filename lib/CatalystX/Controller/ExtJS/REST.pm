@@ -193,21 +193,24 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') {
         $object = $object->$method($id);
         $c->stash->{object} = $object;
     }
+    
+    $c->stash->{form} =
+      $self->get_form($c)
+      ->load_config_file($self->path_to_forms(lc($c->req->method)));
+
 }
+
 
 sub object_PUT {
     my ( $self, $c ) = @_;
     my $object = $c->stash->{object};
-    my $config = $c->stash->{extjs_formfu_model_config};
+    my $form = $c->stash->{form};
 
     # Check if row object exists
     if(!$c->stash->{object}) {
         $self->status_not_found($c, message => 'Object could not be found.');
         return;
     }
-
-    my $form = $self->get_form($c);
-    $form->load_config_file( $self->path_to_forms('put') );
 
     $self->object_PUT_or_POST($c, $form, $object);
     
@@ -228,28 +231,12 @@ sub object_PUT {
 
 sub object_PUT_or_POST {
     my ($self, $c, $form, $object) = @_;
-    
-    # the following lines will be obsolete with the new FormFu::Model::DBIC release
-    # a model_config ignore_if_empty will be introduced
-    
-    foreach my $upload (@{$form->get_all_elements({type => "File"})}) {
-        $form->remove_element($upload)
-          unless($c->req->param($upload->nested_name));
-    }
-    foreach my $password (@{$form->get_all_elements({type => "Password"})}) {
-        $form->remove_element($password)
-          if($c->req->param($password->nested_name) eq ""); # "0" might be a valid password
-    }
 
 }
 
 sub object_POST {
     my ( $self, $c ) = @_;
-
-    my $config = $c->stash->{extjs_formfu_model_config};
-
-    my $form = $self->get_form($c);
-    $form->load_config_file( $self->path_to_forms('post') );
+    my $form = $c->stash->{form};
 
     $self->object_PUT_or_POST($c, $form);
 
@@ -258,6 +245,8 @@ sub object_POST {
     if ( $form->submitted_and_valid ) {
         my $row = $form->model->create;
         $self->handle_uploads($c, $row, $form);
+        
+        $c->stash->{object} = $row;
 
         # get values from model
         $self->status_created(
@@ -275,11 +264,7 @@ sub object_POST {
 
 sub object_GET {
     my ( $self, $c ) = @_;
-        
-    my $form = $self->get_form($c);
-    $form->load_config_file( $self->path_to_forms('get') );
-
-    my $config = $c->stash->{extjs_formfu_model_config};
+    my $form = $c->stash->{form};
 
     $form->process( $c->req );
     

@@ -1,6 +1,6 @@
 package CatalystX::ExtJS;
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 1;
 

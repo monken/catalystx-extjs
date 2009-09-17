@@ -1,5 +1,13 @@
 Revision history for CatalystX-ExtJS
 
+0.09 2009-09-17
+  - removed hack to ignore empty file and password fields
+    this can now be achieved via ignore_if_empty in formfu
+  - the object is now stashed after creating it
+    you can access it via $c->stash->{object}
+  - the form object is now on the stash and can easily be
+    manipulated
+
 0.08 2009-09-12
   - introduced parameter validation in list context
 

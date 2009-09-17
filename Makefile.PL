@@ -7,7 +7,7 @@ license  'BSD';
 
 
 requires 'Catalyst::Action::RenderView';
-requires 'Catalyst::Model::DBIC::Schema';
+requires 'Catalyst::Model::DBIC::Schema' => '0.29';
 requires 'Catalyst::Request::REST::ForBrowsers';
 requires 'Catalyst::Runtime' => '5.8';
 requires 'Catalyst::View::TT';
@@ -23,7 +23,7 @@ requires 'Path::Class';
 
 test_requires 'Test::WWW::Mechanize::Catalyst';
 
-build_requires 'Test::More';
+build_requires 'Test::More' => '0.92';
 
 auto_install;
 
