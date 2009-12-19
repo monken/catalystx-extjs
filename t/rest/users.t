@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use HTTP::Request::Common;
+use File::Spec;
 use JSON;
 
 use lib qw(t/lib);
@@ -74,7 +75,7 @@ is($json->{rows}->[0]->{name}, '0190', 'First row is user "0190"');
 
 # custom options with validation
 
-is(MyApp->controller('User')->list_options_file, 't/root/lists/user_options.yml');
+is(MyApp->controller('User')->list_options_file, File::Spec->catfile('t','root','lists','user_options.yml'));
 
 $mech->get('/users?start=10&limit=20&sort=password&dir=asc&ending=1');
 

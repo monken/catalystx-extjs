@@ -82,7 +82,7 @@ sub validate_options {
     my $form = HTML::FormFu::ExtJS->new;
     $form->populate($self->_extjs_config->{list_options_validation});
     if(-e $self->list_options_file) {
-        $c->log->debug('found configuration file for parameters');
+        $c->log->debug('found configuration file for parameters') if($c->debug);
         $form->load_config_file($self->list_options_file);
     }
     $form->process($c->req->params);
@@ -162,6 +162,11 @@ sub paging_rs : Private {
     $paged = $paged->search(undef, { order_by => [ { $direction => $sort } ] })
       if $sort;
     return $paged;
+}
+
+sub base : Chained('/') NSPathPart CaptureArgs(1) {
+    my ( $self, $c, $id ) = @_;
+    $self->object($c, $id);
 }
 
 sub object : Chained('/') NSPathPart Args ActionClass('REST') {
