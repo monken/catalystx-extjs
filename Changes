@@ -1,5 +1,8 @@
 Revision history for CatalystX-ExtJS
 
+0.11 2010-01-03
+  - Order by me.* (fixes ambiguous errors)
+
 0.10 2009-12-08
   - Silence debug messages
   - fixed failing test on win32 (#500002, thanks kmx)

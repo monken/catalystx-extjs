@@ -1,7 +1,5 @@
 package CatalystX::ExtJS;
 
-our $VERSION = '0.09';
-
 1;
 
 __END__
