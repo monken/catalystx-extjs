@@ -1,7 +1,9 @@
 package
   MyApp::Controller::User;
   
-use base 'CatalystX::Controller::ExtJS::REST';
+use Moose;
+BEGIN { extends 'CatalystX::Controller::ExtJS::REST' };
+with 'CatalystX::Controller::ExtJS::Direct';
 
 __PACKAGE__->config(
     form_base_path => [qw(t root forms)],

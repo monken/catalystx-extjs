@@ -33,8 +33,8 @@ sub _extjs_config_builder {
             schema => 'DBIC',
             resultset => $self->default_resultset
         },
-        form_base_path    => [qw(root forms)],
-        list_base_path    => [qw(root lists)],
+        form_base_path    => [$c->path_to(qw(root forms))],
+        list_base_path    => [$c->path_to(qw(root lists))],
         default_rs_method => 'extjs_rest_'.$default_rs_method,
         context_stash     => 'context',
         list_options_validation => {
@@ -45,6 +45,7 @@ sub _extjs_config_builder {
                 { name => 'sort' },
             ]
         },
+        find_method => 'find',
     };
     my $self_config   = $self->config || {};
     my $parent_config = $c->config->{'ControllerX::ExtJS::REST'} || {};
@@ -87,7 +88,7 @@ sub validate_options {
     return $form;
 }
 
-sub list : Chained('/') NSListPathPart Args {
+sub list : Chained('/') NSListPathPart Args Direct {
     my ( $self, $c ) = @_;
 
     my $form = $self->get_form($c);
@@ -167,10 +168,8 @@ sub base : Chained('/') NSPathPart CaptureArgs(1) {
     $self->object($c, $id);
 }
 
-sub object : Chained('/') NSPathPart Args ActionClass('REST') {
+sub object : Chained('/') NSPathPart Args ActionClass('REST') Direct {
     my ( $self, $c, $id ) = @_;
-
-        
     croak $self->base_file." cannot be found" unless(-e $self->base_file);
     
     my $config = Config::Any->load_files( {files => [ $self->base_file ], use_ext => 1, flatten_to_hash => 0 } );
@@ -191,7 +190,18 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') {
     }
 
     # Get row object
-    my $method = $config->{find_method} || 'find';
+    
+    if(!defined $id && lc($c->req->method) eq 'get') {
+        $c->detach($self->action_for('list'));
+    }
+    
+    unless(defined $id || lc($c->req->method) ne 'put') {
+        my ($pk, $too_much) = $object->result_source->primary_columns;
+        croak 'Not able to process result classes with multiple primary keys' if($too_much);
+        $id = $c->req->param($pk);
+    }
+    
+    my $method = $self->_extjs_config->{find_method};
     if (defined $id && defined $object) {
         $object = $object->$method($id);
         $c->stash->{object} = $object;
@@ -240,7 +250,7 @@ sub object_PUT_or_POST {
 sub object_POST {
     my ( $self, $c ) = @_;
     my $form = $c->stash->{form};
-
+    
     $self->object_PUT_or_POST($c, $form);
 
     $form->process( $c->req );
@@ -250,7 +260,6 @@ sub object_POST {
         $self->handle_uploads($c, $row, $form);
         
         $c->stash->{object} = $row;
-
         # get values from model
         $self->status_created(
             $c,
@@ -262,7 +271,6 @@ sub object_POST {
         # return form values and error messages
         $self->status_ok( $c, entity => $form->validation_response );
     }
-
 }
 
 sub object_GET {

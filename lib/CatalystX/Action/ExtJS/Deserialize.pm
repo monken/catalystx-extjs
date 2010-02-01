@@ -20,7 +20,7 @@ from ExtJS and has multipart form data, so usually an upload.
 sub execute {
     my ($self, $controller, $c) = @_;
     my $class = 'Catalyst::Request::REST::ForBrowsers';
-    $c->request_class($class) unless($c->request_class->isa($class));
+    $c->request_class($class) unless($c->engine->isa('Catalyst::Plugin::SubRequest::Internal::FakeEngine') || $c->request_class->isa($class));
     
     if($c->req->param('x-requested-by') && $c->req->param('x-requested-by') eq "ExtJS"
           && $c->req->header('Content-Type') && $c->req->header('Content-Type') =~ /^multipart\/form-data/ ) {

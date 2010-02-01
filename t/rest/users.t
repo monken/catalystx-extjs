@@ -27,7 +27,15 @@ my $mech = Test::WWW::Mechanize::Catalyst->new();
 
 $mech->add_header('Accept' => 'application/json');
 
-$mech->get_ok('/users', undef, 'request list of users');
+$mech->get_ok('/users', undef, 'request list of users (/users)');
+
+ok(my $json = JSON::decode_json($mech->content), 'response is JSON response');
+
+is(@{$json->{rows}}, 200, '200 rows');
+
+is($json->{results}, 200, '200 rows');
+
+$mech->get_ok('/user', undef, 'request list of users (/user)');
 
 ok(my $json = JSON::decode_json($mech->content), 'response is JSON response');
 

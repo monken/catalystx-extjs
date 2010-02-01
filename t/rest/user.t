@@ -51,11 +51,23 @@ is($json->{success}, 'true', 'change was successful');
 
 is($json->{data}->{name}, 'bas', 'user name has changed');
 
+$request = POST '/user', [id => 1, name => 'bast', password => 'foo'];
+$request->method('PUT');  # don't use PUT directly because it won't pick up the form parameters
+
+ok($mech->request($request), 'change user name');
+
+ok($json = JSON::decode_json($mech->content), 'response is JSON response');
+
+is($json->{success}, 'true', 'change was successful');
+
+is($json->{data}->{name}, 'bast', 'user name has changed');
+
+
 $mech->get_ok('/user/1', undef, 'get user 1');
 
 ok($json = JSON::decode_json($mech->content), 'response is JSON response');
 
-is($json->{data}->{name}, 'bas', 'user name has changed');
+is($json->{data}->{name}, 'bast', 'user name has changed');
 
 $request = POST '/user/1', [name => 'bas', password => 'foo'];
 $request->method('DELETE');  # don't use PUT directly because it won't pick up the form parameters
