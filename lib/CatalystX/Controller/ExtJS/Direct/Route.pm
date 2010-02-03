@@ -144,7 +144,8 @@ sub build {
         push( @roles, 'Chained' );
     }
     if (   $action->attributes->{ActionClass}
-        && $action->attributes->{ActionClass}->[0] eq 'Catalyst::Action::REST' )
+        && ($action->attributes->{ActionClass}->[0] eq 'Catalyst::Action::REST'
+        || $action->attributes->{ActionClass}->[0] eq 'CatalystX::Action::ExtJS::REST') )
     {
         push( @roles, 'REST' );
     }

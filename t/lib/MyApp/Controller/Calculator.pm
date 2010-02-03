@@ -15,7 +15,6 @@ sub add : Chained('/') : Path : CaptureArgs(1) {
 
 sub add_to : Chained('add') : PathPart('to') : Args(1) : Direct('add') {
 	my($self,$c,$arg) = @_;
-	$c->log->warn($c->req->method);
 	$c->res->body( $c->stash->{add} + $arg );
 }
 

@@ -17,6 +17,9 @@ use Scalar::Util qw/ weaken /;
 
 use Lingua::EN::Inflect;
 
+use Catalyst::Plugin::SubRequest;
+use JSON::XS;
+
 use Moose;
 
 
@@ -56,12 +59,6 @@ sub _extjs_config_builder {
 
     return $merged_config;
     
-}
-
-sub is_extjs_upload {
-    my ( $self, $c ) = @_;
-    return ( $c->req->param('x-requested-by') && $c->req->param('x-requested-by') eq "ExtJS"
-          && $c->req->header('Content-Type') && $c->req->header('Content-Type') =~ /^multipart\/form-data/ );
 }
 
 sub default_resultset {
@@ -168,7 +165,7 @@ sub base : Chained('/') NSPathPart CaptureArgs(1) {
     $self->object($c, $id);
 }
 
-sub object : Chained('/') NSPathPart Args ActionClass('REST') Direct {
+sub object : Chained('/') NSPathPart Args ActionClass('+CatalystX::Action::ExtJS::REST') Direct {
     my ( $self, $c, $id ) = @_;
     croak $self->base_file." cannot be found" unless(-e $self->base_file);
     
@@ -201,7 +198,7 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') Direct {
         $id = $c->req->param($pk);
     }
     
-    my $method = $self->_extjs_config->{find_method};
+    my $method = $config->{find_method} || $self->_extjs_config->{find_method};
     if (defined $id && defined $object) {
         $object = $object->$method($id);
         $c->stash->{object} = $object;
@@ -210,7 +207,6 @@ sub object : Chained('/') NSPathPart Args ActionClass('REST') Direct {
     $c->stash->{form} =
       $self->get_form($c)
       ->load_config_file($self->path_to_forms(lc($c->req->method)));
-
 }
 
 
@@ -374,7 +370,7 @@ sub begin : ActionClass('+CatalystX::Action::ExtJS::Deserialize') {
 sub end : ActionClass('Serialize') {
     my ( $self, $c ) = @_;
     $self->next::method($c);
-    if ( $self->is_extjs_upload($c) ) {
+    if ( $c->req->is_ext_upload ) {
         my $stash_key = (
               $self->config->{'serialize'}
             ? $self->config->{'serialize'}->{'stash_key'}
@@ -703,13 +699,6 @@ List Action which returns the data for a ExtJS grid.
 
 Handles uploaded files by assigning the filehandle to the column accessor of
 the DBIC row object.
-
-=head2 is_extjs_upload
-
-Returns true if the current request looks like a request from ExtJS and has
-multipart form data, so usually an upload. This requires that you add a C<x-requested-by> parameter to your
-form which has the value C<ExtJS>. This can be done either by adding a hidden form field,
-by using the C<params> config option of ExtJS C<Ext.form.Action.Submit> or C<extraParams> in C<Ext.Ajax.request>.
 
 =head2 default_resultset
 
