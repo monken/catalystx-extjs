@@ -13,7 +13,8 @@ __PACKAGE__->config(
         action => {
             end    => { ActionClass => '+CatalystX::Action::ExtJS::Serialize' },
             index  => { Path        => undef },
-            router => { Path        => 'router' }
+            router => { Path        => 'router' },
+            src => { Local => undef },
         }
     }
 );
@@ -27,6 +28,11 @@ has 'routes' => ( is => 'rw', isa => 'HashRef', default => sub { {} } );
 has 'namespace' => ( is => 'rw' );
 
 sub index { }
+
+sub src {
+    my ($self, $c) = @_;
+    $c->res->body( 'var Ext_PROVIDER = ' . $self->encoded_api . ';' );
+}
 
 sub _build_api {
     my ($self) = @_;
@@ -57,7 +63,7 @@ sub _build_api {
     return {
         url => $c->dispatcher->uri_for_action( $self->action_for('router') )
           ->as_string,
-        type    => 'remote',
+        type    => 'remoting',
         actions => $data
     };
 }

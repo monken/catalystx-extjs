@@ -10,6 +10,7 @@
      <!-- ENDLIBS -->
 
     <script type="text/javascript" src="/static/ext/ext-all.js"></script>
+     <script type="text/javascript" src="/api/src"></script>
     <script type="text/javascript" src="/static/App.js"></script>
     <script type="text/javascript" src="/static/writer.js"></script>
     <script type="text/javascript" src="/static/UserForm.js"></script>

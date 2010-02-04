@@ -7,6 +7,8 @@
 // Application instance for showing user-feedback messages.
 var App = new Ext.App({});
 
+Ext.Direct.addProvider(Ext_PROVIDER);
+
 // Create HttpProxy instance.  Notice new configuration parameter "api" here instead of load.  However, you can still use
 // the "url" paramater -- All CRUD requests will be directed to your single url instead.
 var proxy = new Ext.data.HttpProxy({

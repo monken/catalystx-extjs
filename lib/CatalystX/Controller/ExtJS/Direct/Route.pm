@@ -129,8 +129,7 @@ use Moose::Role;
 around '_build_arguments' => sub {
     my ( $orig, $self, $args ) = @_;
     my $arguments = $self->$orig();
-    $arguments++
-      if ( $self->crud_action ne 'create' && $self->crud_action ne 'update' );
+    $arguments++;
     return $arguments;
 };
 
