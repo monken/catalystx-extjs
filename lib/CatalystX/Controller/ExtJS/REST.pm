@@ -126,7 +126,9 @@ sub list : Chained('/') NSListPathPart Args Direct {
         }
     }
     
-    my $grid_data = $form->grid_data([$rs->all]);
+    my ($pk, $too_much) = $rs->result_source->primary_columns;
+    
+    my $grid_data = $form->grid_data([$rs->all], {metaData => {idProperty => $pk, messageProperty => 'message' }});
     if ($self->_extjs_config->{no_list_metadata}) {
         delete $grid_data->{metaData};
     }
@@ -165,10 +167,6 @@ sub base : Chained('/') NSPathPart CaptureArgs(1) {
     $self->object($c, $id);
 }
 
-sub batch : Local {
-	my ($self, $c) = @_;
-	
-}
 
 sub object : Chained('/') NSPathPart Args ActionClass('+CatalystX::Action::ExtJS::REST') Direct {
     my ( $self, $c, $id ) = @_;

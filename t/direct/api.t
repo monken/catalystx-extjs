@@ -15,7 +15,7 @@ $mech->add_header( 'Content-type' => 'application/json' );
 
 my $api = {
     url     => '/api/router',
-    type    => 'remote',
+    type    => 'remoting',
     actions => {
         Calculator => [
             { name => 'add',      len => 2 },
@@ -23,16 +23,16 @@ my $api = {
             { name => 'subtract', len => 0 },
         ],
         REST => [
-            { name => 'create',  len => 0 },
+            { name => 'create',  len => 1 },
             { name => 'read',    len => 1 },
-            { name => 'update',  len => 0 },
+            { name => 'update',  len => 1 },
             { name => 'destroy', len => 1 },
         ],
         User => [
             { name => 'list',    len => 0 },
-            { name => 'create',  len => 0 },
+            { name => 'create',  len => 1 },
             { name => 'read',    len => 1 },
-            { name => 'update',  len => 0 },
+            { name => 'update',  len => 1 },
             { name => 'destroy', len => 1 },
         ],
         NestedController => [
@@ -51,11 +51,11 @@ ok( my $json = decode_json( $mech->content ), 'valid json' );
 is_deeply( $json, $api, 'expected api' );
 
 my $lens = 0;
-$lens++ while( $mech->content = /"len":(\d+)/g );
-is($len, 13 );
+my $content = $mech->content;
+$lens++ while( $content =~ /"len":(\d+)/g );
+is($lens, 13 );
 
-$api = MyApp->controller('API')->api;
-
-use Data::Dumper; print Dumper $api;
+# $api = MyApp->controller('API')->api;
+# use Data::Dumper; print Dumper $api;
 
 done_testing;

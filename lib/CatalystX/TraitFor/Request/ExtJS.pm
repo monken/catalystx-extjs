@@ -20,19 +20,6 @@ around 'method' => sub {
 
 };
 
-
-
-# 
-# around 'body_parameters' => sub {
-#     my ( $orig, $self, $params ) = @_;
-#     return $self->$orig() unless ( ref $params );
-#     if ( $params->{data} && keys %$params == 1 ) {
-#         my $json = delete $params->{data};
-#         $params = decode_json($json);
-#     }
-#     return $self->$orig($params);
-# };
-
 1;
 
 __END__

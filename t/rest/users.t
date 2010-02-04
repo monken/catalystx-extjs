@@ -37,7 +37,7 @@ is($json->{results}, 200, '200 rows');
 
 $mech->get_ok('/user', undef, 'request list of users (/user)');
 
-ok(my $json = JSON::decode_json($mech->content), 'response is JSON response');
+ok($json = JSON::decode_json($mech->content), 'response is JSON response');
 
 is(@{$json->{rows}}, 200, '200 rows');
 

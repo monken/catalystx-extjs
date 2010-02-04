@@ -17,7 +17,7 @@ App.user.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
     height: 300,
     width: 500,
     style: 'margin-top: 10px',
-
+    sm: new Ext.grid.RowSelectionModel(),
     initComponent : function() {
 
         // typical viewConfig
@@ -76,14 +76,6 @@ App.user.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
                 this.store.batch = pressed;
             },
             scope: this
-        }, '-', {
-            text: 'writeAllFields',
-            enableToggle: true,
-            tooltip: 'When enabled, Writer will write *all* fields to the server -- not just those that changed.',
-            toggleHandler: function(btn, pressed) {
-                store.writer.writeAllFields = pressed;
-            },
-            scope: this
         }, '-'];
     },
 
@@ -124,11 +116,9 @@ App.user.Grid = Ext.extend(Ext.grid.EditorGridPanel, {
      * onDelete
      */
     onDelete : function(btn, ev) {
-        var index = this.getSelectionModel().getSelectedCell();
-        if (!index) {
-            return false;
+        var rec = this.getSelectionModel().getSelections();
+        for(var i = 0; i < rec.length; i++) {
+            this.store.remove(rec[i]);
         }
-        var rec = this.store.getAt(index[0]);
-        this.store.remove(rec);
     }
 });

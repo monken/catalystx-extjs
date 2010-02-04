@@ -18,7 +18,7 @@ var reader = new Ext.data.JsonReader({
 // The new DataWriter component.
 var writer = new Ext.data.JsonWriter({
     encode: false,
-    writeAllFields: false
+    writeAllFields: true
 });
 
 // Typical Store collecting the Proxy, Reader and Writer together.
@@ -45,7 +45,7 @@ store.load();
 //
 // Listen to all DataProxy beforewrite events
 //
-/*
+
 Ext.data.DataProxy.addListener('beforewrite', function(proxy, action) {
     App.setAlert(App.STATUS_NOTICE, "Before " + action);
 });
@@ -53,13 +53,15 @@ Ext.data.DataProxy.addListener('beforewrite', function(proxy, action) {
 ////
 // all write events
 //
-/*    App.setAlert(true, action + ':' + res.message);
+Ext.data.DataProxy.addListener('write', function(proxy, action, result, res, rs) {
+    console.log(proxy, action, result, res, rs);
+    App.setAlert(true, action + ':' + res.result.message);
 });
 
 ////
 // all exception events
 //
-Ext.data.DirectProxy.addListener('exception', function(proxy, type, action, options, res) {
+Ext.data.DataProxy.addListener('exception', function(proxy, type, action, options, res) {
     if (type === 'remote') {
         Ext.Msg.show({
             title: 'REMOTE EXCEPTION',
@@ -69,7 +71,7 @@ Ext.data.DirectProxy.addListener('exception', function(proxy, type, action, opti
         });
     }
 });
-*/
+
 // A new generic text field
 var textField =  new Ext.form.TextField();
 

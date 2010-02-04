@@ -9,7 +9,7 @@ __PACKAGE__->table('foo');
 __PACKAGE__->add_columns(
 	id => {
       data_type => 'character',
-      is_random => {size => 10, set => ['a'..'z','A'..'Z', 0..9]},
+      is_random => {size => 8, set => ['A'..'Z', 0..9]},
       size => 10,
     },
     created_on => {

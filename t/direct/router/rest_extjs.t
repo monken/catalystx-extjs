@@ -5,7 +5,7 @@ use warnings;
 
 use HTTP::Request::Common;
 use JSON::XS;
-BEGIN { $ENV{DBIC_TRACE} = 1};
+
 use lib qw(t/lib);
 
 use Test::WWW::Mechanize::Catalyst 'MyApp';
@@ -22,14 +22,39 @@ ok(
     $mech->request(
         POST $api->{url},
         Content_Type => 'application/json',
-        Content      => q({"action":"User","method":"create","data":[{"rows":[{"name":"a","password":1},{"name":"m","password":1}]}],"type":"rpc","tid":6})
+        Content      => q({"action":"User","method":"create","data":[{"rows":[{"name":"a","password":1},{"name":"a","password":1},{"name":"m","password":1}]}],"type":"rpc","tid":6})
     ),
     'create users'
 );
 
-#count_users(2);
+count_users(3);
 
-print $mech->content;
+ok(
+    $mech->request(
+        POST $api->{url},
+        Content_Type => 'application/json',
+        Content      => q(
+        {"action":"User","method":"destroy","data":[{"rows":"1"}],"type":"rpc","tid":3}
+)
+    ),
+    'delete user 1'
+);
+
+count_users(2);
+
+ok(
+    $mech->request(
+        POST $api->{url},
+        Content_Type => 'application/json',
+        Content      => q(
+        {"action":"User","method":"destroy","data":[{"rows":[2,3]}],"type":"rpc","tid":3}
+)
+    ),
+    'delete user 1'
+);
+
+
+count_users(0);
 
 
 sub count_users {

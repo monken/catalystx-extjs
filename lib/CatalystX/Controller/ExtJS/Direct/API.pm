@@ -114,6 +114,8 @@ sub router {
 			} elsif ( ref $data->{$key} eq 'ARRAY' ) {
 				push(@requests, map { {%$req, data => $_} } @{$data->{$key}});
 				next;
+			} else {
+			    $req->{data} = $data->{$key};
 			}
 		}
 		push(@requests, $req);
@@ -122,7 +124,7 @@ sub router {
     my @res;
     foreach my $req (@requests) {
 		$req->{data} = [$req->{data}] if(ref $req->{data} ne "ARRAY");
-		unless ( $req
+		unless ( $req && $req->{action}
             && exists $routes->{ $req->{action} }
             && exists $routes->{ $req->{action} }->{ $req->{method} } )
         {
