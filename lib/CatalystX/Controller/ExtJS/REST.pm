@@ -1,8 +1,6 @@
 package CatalystX::Controller::ExtJS::REST;
-
+# ABSTRACT: RESTful interface to dbic objects
 use base qw(Catalyst::Controller::REST);
-
-#with 'Catalyst::Component::InstancePerContext';
 
 use Config::Any;
 use Scalar::Util qw/ weaken /;
@@ -416,10 +414,6 @@ sub _parse_NSListPathPart_attr {
 
 __END__
 
-=head1 NAME
-
-CatalystX::Controller::ExtJS::REST - RESTful interface to dbic objects
-
 =head1 SYNOPSIS
 
   package MyApp::Controller::User;
@@ -788,18 +782,8 @@ returned in a document with the C<Content-type> set to C<text/html>.
 This accessor contains the configuration options for this controller. It is created by merging
 C<< __PACKAGE__->config >> with the default values.
 
-=head1 AUTHOR
+=head1 CONTRIBUTORS
 
-  Moritz Onken
-  
   Mario Minati
 
-=head1 COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2009 by Moritz Onken.
-
-This is free software, licensed under:
-
-  The (three-clause) BSD License
-
-=cut
