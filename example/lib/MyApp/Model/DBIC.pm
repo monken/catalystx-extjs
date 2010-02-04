@@ -30,12 +30,17 @@ after BUILD => sub {
         }
     }
     else {
+        unlink('t/sqlite.sql') if(-e 't/sqlite.sql');
         $schema->deploy;
-        $schema->create_ddl_dir( ['SQLite'], undef, undef, undef,
+        $schema->create_ddl_dir( ['SQLite'], undef, './', undef,
             { add_drop_table => 0 } );
     }
 	
-	$schema->resultset('User')->create({email => 'onken@netcubed.de', first => 'Moritz', last => 'Onken' });
+	$schema->resultset('User')->create({email => 'lisa@simpsons.com', first => 'Lisa', last => 'Simpson' });
+	$schema->resultset('User')->create({email => 'bart@simpsons.com', first => 'Bart', last => 'Simpson' });
+	$schema->resultset('User')->create({email => 'maggie@simpsons.com', first => 'Maggie', last => 'Simpson' });
+	$schema->resultset('User')->create({email => 'homer@simpsons.com', first => 'Homer', last => 'Simpson' });
+	$schema->resultset('User')->create({email => 'marge@simpsons.com', first => 'Marge', last => 'Simpson' });
 };
 
 1;

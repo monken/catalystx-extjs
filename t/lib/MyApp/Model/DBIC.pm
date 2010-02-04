@@ -30,8 +30,9 @@ after BUILD => sub {
         }
     }
     else {
+        unlink('t/sqlite.sql') if(-e 't/sqlite.sql');
         $schema->deploy;
-        $schema->create_ddl_dir( ['SQLite'], undef, undef, undef,
+        $schema->create_ddl_dir( ['SQLite'], undef, './', undef,
             { add_drop_table => 0 } );
     }
 };
