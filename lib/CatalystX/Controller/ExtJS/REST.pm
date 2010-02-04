@@ -165,10 +165,14 @@ sub base : Chained('/') NSPathPart CaptureArgs(1) {
     $self->object($c, $id);
 }
 
+sub batch : Local {
+	my ($self, $c) = @_;
+	
+}
+
 sub object : Chained('/') NSPathPart Args ActionClass('+CatalystX::Action::ExtJS::REST') Direct {
     my ( $self, $c, $id ) = @_;
-    croak $self->base_file." cannot be found" unless(-e $self->base_file);
-    
+	croak $self->base_file." cannot be found" unless(-e $self->base_file);
     my $config = Config::Any->load_files( {files => [ $self->base_file ], use_ext => 1, flatten_to_hash => 0 } );
     $config = { %{$self->_extjs_config->{model_config}}, %{$config->{$self->base_file}->{model_config} || {}} };
     $config->{resultset} ||= $self->default_resultset;
@@ -203,7 +207,7 @@ sub object : Chained('/') NSPathPart Args ActionClass('+CatalystX::Action::ExtJS
         $object = $object->$method($id);
         $c->stash->{object} = $object;
     }
-    
+	
     $c->stash->{form} =
       $self->get_form($c)
       ->load_config_file($self->path_to_forms(lc($c->req->method)));
@@ -248,25 +252,30 @@ sub object_POST {
     my $form = $c->stash->{form};
     
     $self->object_PUT_or_POST($c, $form);
-
+	
     $form->process( $c->req );
 
     if ( $form->submitted_and_valid ) {
-        my $row = $form->model->create;
+		my $row = $form->model->create;
         $self->handle_uploads($c, $row, $form);
         
         $c->stash->{object} = $row;
-        # get values from model
-        $self->status_created(
+        # get values from model and set the primary key
+		my ($pk, $too_much) = $row->result_source->primary_columns;
+		my $data = $form->form_data( $row );
+		$data->{data}->{$pk} = $row->$pk;
+		$self->status_created(
             $c,
-            location => $c->uri_for( '', $row->id ),
-            entity   => $form->form_data( $row )
+            location => $c->uri_for( '', $row->$pk ),
+            entity => $data
         );
+    
     }
     else {
         # return form values and error messages
         $self->status_ok( $c, entity => $form->validation_response );
     }
+
 }
 
 sub object_GET {

@@ -91,13 +91,38 @@ sub router {
                   } qw(extType extAction extMethod extTID extUpload)
             }
         ];
-        $reqs->[0]->{data} = decode_json( delete $params->{extData} )
-          if ( $params->{extData} );
-        $reqs->[0] = { %{ $reqs->[0] }, %$params };
+        if ( $params->{extData} ) {
+			$reqs->[0]->{data} = decode_json( delete $params->{extData} );
+		} else {
+			$reqs->[0]->{data} = [{%$params}];
+		}
     }
+	
+	my @requests;
+	
+	foreach my $req (@$reqs) {
+		$req->{data} = [$req->{data}] unless(ref $req->{data} eq 'ARRAY');
+		unless (@{$req->{data} || []}) {
+			push(@requests, $req);
+			next;
+		}
+		my $data = $req->{data}->[-1];
+		if(ref $data eq 'HASH' && keys %$data == 1) {
+			my ($key) =  keys %$data;
+			if(ref $data->{$key} eq 'HASH') {
+				$req->{data} = $data->{$key};
+			} elsif ( ref $data->{$key} eq 'ARRAY' ) {
+				push(@requests, map { {%$req, data => $_} } @{$data->{$key}});
+				next;
+			}
+		}
+		push(@requests, $req);
+	}
+	
     my @res;
-    foreach my $req (@$reqs) {
-        unless ( $req
+    foreach my $req (@requests) {
+		$req->{data} = [$req->{data}] if(ref $req->{data} ne "ARRAY");
+		unless ( $req
             && exists $routes->{ $req->{action} }
             && exists $routes->{ $req->{action} }->{ $req->{method} } )
         {
@@ -116,15 +141,16 @@ sub router {
 
         my $response =
           Catalyst::Plugin::SubRequest::sub_request_response( $c,
-            { path => $url->path, $route->request },
-            undef, $c->req->params );
+            { path => $url->path, $route->request($req) },
+            undef, (@{$req->{data}} && ref $req->{data}->[-1] eq 'HASH'	? $req->{data}->[-1] : undef) );
 
         if ( $response->content_type eq 'application/json' ) {
-            $response->body( decode_json( $response->body ) );
+			my $json = decode_json( $response->body );
+			$json = $json->{data} if($json->{success});
+            $response->body( $json );
         }
         my $res = { map { $_ => $req->{$_} } qw(action method tid type) };
-
-        $c->stash->{upload} = 1 if ( $req->{upload} );
+	    $c->stash->{upload} = 1 if ( $req->{upload} );
         push( @res, { %$res, result => $response->body } );
     }
     $c->stash->{rest} = @res != 1 ? \@res : $res[0];

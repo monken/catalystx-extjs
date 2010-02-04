@@ -9,37 +9,27 @@ var App = new Ext.App({});
 
 Ext.Direct.addProvider(Ext_PROVIDER);
 
-// Create HttpProxy instance.  Notice new configuration parameter "api" here instead of load.  However, you can still use
-// the "url" paramater -- All CRUD requests will be directed to your single url instead.
-var proxy = new Ext.data.HttpProxy({
-    restful: true,
-    url: '/user'
-});
 
 // Typical JsonReader.  Notice additional meta-data params for defining the core attributes of your json-response
 var reader = new Ext.data.JsonReader({
-    totalProperty: 'total',
-    successProperty: 'success',
-    idProperty: 'id',
-    root: 'data',
-    messageProperty: 'message'  // <-- New "messageProperty" meta-data
-}, [
-    {name: 'id'},
-    {name: 'email', allowBlank: false},
-    {name: 'first', allowBlank: false},
-    {name: 'last', allowBlank: false}
-]);
+	idProperty: 'id'
+});
 
 // The new DataWriter component.
 var writer = new Ext.data.JsonWriter({
-    encode: true,
+    encode: false,
     writeAllFields: false
 });
 
 // Typical Store collecting the Proxy, Reader and Writer together.
-var store = new Ext.data.Store({
+var store = new Ext.data.DirectStore({
     id: 'user',
-    proxy: proxy,
+	api: {
+		create: User.create,
+		update: User.update,
+		read: User.read,
+		destroy: User.destroy
+	},
     reader: reader,
     writer: writer,  // <-- plug a DataWriter into the store just as you would a Reader
     autoSave: true // <-- false would delay executing create, update, destroy requests until specifically told to do so with some [save] buton.
@@ -55,6 +45,7 @@ store.load();
 //
 // Listen to all DataProxy beforewrite events
 //
+/*
 Ext.data.DataProxy.addListener('beforewrite', function(proxy, action) {
     App.setAlert(App.STATUS_NOTICE, "Before " + action);
 });
@@ -62,14 +53,13 @@ Ext.data.DataProxy.addListener('beforewrite', function(proxy, action) {
 ////
 // all write events
 //
-Ext.data.DataProxy.addListener('write', function(proxy, action, result, res, rs) {
-    App.setAlert(true, action + ':' + res.message);
+/*    App.setAlert(true, action + ':' + res.message);
 });
 
 ////
 // all exception events
 //
-Ext.data.DataProxy.addListener('exception', function(proxy, type, action, options, res) {
+Ext.data.DirectProxy.addListener('exception', function(proxy, type, action, options, res) {
     if (type === 'remote') {
         Ext.Msg.show({
             title: 'REMOTE EXCEPTION',
@@ -79,7 +69,7 @@ Ext.data.DataProxy.addListener('exception', function(proxy, type, action, option
         });
     }
 });
-
+*/
 // A new generic text field
 var textField =  new Ext.form.TextField();
 

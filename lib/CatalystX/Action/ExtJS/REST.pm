@@ -31,12 +31,11 @@ sub new {
     return $class->next::method(@_);
 }
 
-around 'dispatch' => sub {
-    my ( $orig, $self, $c ) = @_;
-    my $params = $c->req->body_params;
-    return $self->$orig($c) unless(my $data = $c->req->data);
-    my $controller = $c->component( $self->class );
-    return $controller->router($c);
-};
+#around 'dispatch' => sub {
+#    my ( $orig, $self, $c ) = @_;
+#    return $self->$orig($c) unless(my $data = $c->req->data);
+#    my $controller = $c->component( $self->class );
+#    $c->detach($controller->action_for('batch'));
+#};
 
 1;

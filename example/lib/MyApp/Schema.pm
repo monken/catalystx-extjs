@@ -8,7 +8,7 @@ __PACKAGE__->load_namespaces;
 
 
 sub ddl_filename {
-    return 't/sqlite.sql';
+    return 'example/sqlite.sql';
 }
 
 1;

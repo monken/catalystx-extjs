@@ -50,6 +50,12 @@ ok( my $json = decode_json( $mech->content ), 'valid json' );
 
 is_deeply( $json, $api, 'expected api' );
 
-#print $mech->content;
+my $lens = 0;
+$lens++ while( $mech->content = /"len":(\d+)/g );
+is($len, 13 );
+
+$api = MyApp->controller('API')->api;
+
+use Data::Dumper; print Dumper $api;
 
 done_testing;

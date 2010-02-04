@@ -197,25 +197,8 @@ ok(
 ok( $json = decode_json( $mech->content ), 'response is valid json' );
 is( ref $json->{result}, 'HASH', 'result is a hash' );
 
-ok(
-    $mech->request(
-        POST $api->{url},
-        Content_Type => 'application/json',
-        Content      => encode_json(
-            {
-                action => 'User',
-                method => 'list',
-                tid    => $tid,
-                data   => [],
-                type   => 'rpc',
-            }
-        )
-    ),
-    'get list of users'
-);
+$json = count_users(1);
 
-ok( $json = decode_json( $mech->content ), 'response is valid json' );
-is($json->{result}->{results}, 1, 'one user');
 is_deeply(
     $json->{result}->{rows},
     [
@@ -246,25 +229,8 @@ ok(
 ok( $json = decode_json( $mech->content ), 'response is valid json' );
 is( ref $json->{result}, 'HASH', 'result is a hash' );
 
-ok(
-    $mech->request(
-        POST $api->{url},
-        Content_Type => 'application/json',
-        Content      => encode_json(
-            {
-                action => 'User',
-                method => 'list',
-                tid    => $tid,
-                data   => [],
-                type   => 'rpc',
-            }
-        )
-    ),
-    'get list of users'
-);
+$json = count_users(1);
 
-ok( $json = decode_json( $mech->content ), 'response is valid json' );
-is($json->{result}->{results}, 1, 'one user');
 is_deeply(
     $json->{result}->{rows},
     [
@@ -296,24 +262,34 @@ ok(
 ok( $json = decode_json( $mech->content ), 'response is valid json' );
 is( ref $json->{result}, 'HASH', 'result is a hash' );
 
-ok(
-    $mech->request(
-        POST $api->{url},
-        Content_Type => 'application/json',
-        Content      => encode_json(
-            {
-                action => 'User',
-                method => 'list',
-                tid    => $tid,
-                data   => [],
-                type   => 'rpc',
-            }
-        )
-    ),
-    'get list of users'
-);
+count_users(0);
 
-ok( $json = decode_json( $mech->content ), 'response is valid json' );
-is($json->{result}->{results}, 0, 'no users');
+
+
+
+sub count_users {
+	my $user = shift;
+	ok(
+		$mech->request(
+			POST $api->{url},
+			Content_Type => 'application/json',
+			Content      => encode_json(
+				{
+					action => 'User',
+					method => 'list',
+					tid    => $tid,
+					data   => [],
+					type   => 'rpc',
+				}
+			)
+		),
+		'get list of users'
+	);
+
+	ok( my $_json = decode_json( $mech->content ), 'response is valid json' );
+	is($_json->{result}->{results}, $user, $user . ' users');
+	return $_json;
+
+}
 
 done_testing;

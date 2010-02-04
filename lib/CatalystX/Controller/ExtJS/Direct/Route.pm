@@ -25,7 +25,8 @@ sub build {
 }
 
 sub request {
-    return ();
+	my ($self, $req) = @_;
+    return ( data => $req->{data});
 }
 
 package CatalystX::Controller::ExtJS::Direct::Route::Chained;
@@ -55,14 +56,14 @@ sub _build_arguments {
 
 sub build_api {
     my ($self) = @_;
-    return { name => $self->name, len => $self->arguments };
+    return { name => $self->name, len => $self->arguments+0 };
 }
 
 sub build_url {
     my ( $route, $c, $data ) = @_;
     my @data = @{ $data || [] };
-    return undef if ( $route->arguments > @data );
-    my $captures_length =
+	@data = grep { !ref $_ } @data;
+	my $captures_length =
       defined $route->action->attributes->{Args}->[0]
       
       ? $route->arguments - $route->action->attributes->{Args}->[0]
@@ -89,14 +90,14 @@ has 'crud_methods' => (
     }
 );
 
-around '_build_arguments' => sub {
-    my ( $orig, $self, $args ) = @_;
-    my $arguments = $self->$orig();
-    $arguments--
-      if ( $arguments > 0 && ($self->crud_action eq 'create'
-        || $self->crud_action eq 'update') );
-    return $arguments;
-};
+#around '_build_arguments' => sub {
+#    my ( $orig, $self, $args ) = @_;
+#    my $arguments = $self->$orig();
+#    $arguments--
+#      if ( $arguments > 0 && ($self->crud_action eq 'create'
+#        || $self->crud_action eq 'update') );
+#    return $arguments;
+#};
 
 sub _build_name {
     my ($self) = @_;
@@ -112,16 +113,16 @@ sub build {
     return @routes;
 }
 
-sub request {
-    my $self   = shift;
-    my %params = $self->maybe::next::method(@_);
+around 'request' => sub {
+    my ($orig, $self, $req)   = @_;
+    my %params = $self->$orig($req);
     return (
         %params,
-        method        => $self->crud_methods->{ $self->crud_action },
+		method        => $self->crud_methods->{ $self->crud_action },
         content_types => ['application/json']
     );
 
-}
+};
 
 package CatalystX::Controller::ExtJS::Direct::Route::REST::ExtJS;
 use Moose::Role;

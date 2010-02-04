@@ -34,6 +34,8 @@ after BUILD => sub {
         $schema->create_ddl_dir( ['SQLite'], undef, undef, undef,
             { add_drop_table => 0 } );
     }
+	
+	$schema->resultset('User')->create({email => 'onken@netcubed.de', first => 'Moritz', last => 'Onken' });
 };
 
 1;
