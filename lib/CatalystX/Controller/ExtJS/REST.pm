@@ -233,9 +233,7 @@ sub object : Chained('/') NSPathPart Args ActionClass('+CatalystX::Action::ExtJS
     $c->stash->{extjs_formfu_model_config} = $config;
     
     if(!defined $id && lc($c->req->method) eq 'get') {
-        $self->list($c);
-        use Catalyst::Action::Serialize;
-        Catalyst::Action::Serialize->execute($self, $c);
+        
         eval { $c->detach; };
         warn $@;
     }
