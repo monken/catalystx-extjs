@@ -210,6 +210,28 @@ is_deeply(
     ]
 );
 
+ok(     $mech->request(
+        POST $api->{url},
+        Content_Type => 'application/json',
+        Content      => encode_json(
+            {
+                action => 'User',
+                method => 'read',
+                data   => [],
+                tid    => $tid,
+                type   => 'rpc'
+            }
+        )
+    ),
+    'list users'
+);
+
+
+ok( $json = decode_json( $mech->content ), 'response is valid json' );
+is( $json->{type}, 'rpc', 'type is rpc' );
+is( $json->{result}->{results}, 1, 'one result' );
+die $mech->content;
+
 ok(
     $mech->request(
         POST $api->{url},

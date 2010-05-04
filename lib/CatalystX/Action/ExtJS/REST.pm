@@ -1,5 +1,5 @@
 package CatalystX::Action::ExtJS::REST;
-
+# ABSTRACT: Construct a new request class
 use Moose;
 extends 'Catalyst::Action::REST';
 
@@ -30,12 +30,5 @@ sub new {
     $app->request_class( $meta->name );
     return $class->next::method(@_);
 }
-
-#around 'dispatch' => sub {
-#    my ( $orig, $self, $c ) = @_;
-#    return $self->$orig($c) unless(my $data = $c->req->data);
-#    my $controller = $c->component( $self->class );
-#    $c->detach($controller->action_for('batch'));
-#};
 
 1;

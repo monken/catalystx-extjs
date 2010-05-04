@@ -1,18 +1,9 @@
 package CatalystX::Action::ExtJS::Serialize;
-
+# ABSTRACT: Handle responses from uploads
 use strict;
 use warnings;
 
 use base 'Catalyst::Action::Serialize';
-
-=head1 PUBLIC METHODS
-
-=head2 execute
-
-Wrap the serialized response in a textarea field if there was a file upload.
-Furthermore set the C<content-type> to C<< text/html >>.
-
-=cut
 
 sub execute {
     my ( $self, $controller, $c ) = @_;
@@ -27,3 +18,14 @@ sub execute {
 }
 
 1;
+
+__END__
+
+=head1 PUBLIC METHODS
+
+=head2 execute
+
+Wrap the serialized response in a textarea field if there was a file upload.
+Furthermore set the C<content-type> to C<< text/html >>.
+
+=cut
