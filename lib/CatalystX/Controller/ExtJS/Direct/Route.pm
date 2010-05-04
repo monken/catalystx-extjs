@@ -1,6 +1,8 @@
 package CatalystX::Controller::ExtJS::Direct::Route;
+#ABSTRACT: Ext.Direct route object
 use Moose;
 
+has 'arguments' => ( is => 'rw', isa => 'Int', lazy_build => 1 );
 has 'action'     => ( is => 'ro', required   => 1 );
 has 'name'       => ( is => 'rw', lazy_build => 1 );
 has 'dispatcher' => ( is => 'rw', weak_ref   => 1 );
@@ -10,14 +12,19 @@ sub _build_name {
     return $self->action->attributes->{Direct}->[0] || $self->action->name;
 }
 
+sub _build_arguments {
+	my ($self) = @_;
+    return $self->action->attributes->{DirectArgs}->[0] || 0;
+}
+
 sub build_api {
     my ($self) = @_;
-    return { name => $self->name, len => 0 };
+    return { name => $self->name, len => $self->arguments + 0 };
 }
 
 sub build_url {
-    my ( $self, $c, $data ) = @_;
-    return $c->uri_for( $self->action );
+    my ( $self, $data ) = @_;
+    return $self->action;
 }
 
 sub build {
@@ -29,10 +36,13 @@ sub request {
     return ( data => $req->{data});
 }
 
+sub prepare_request {
+	shift;
+	return @_;
+}
+
 package CatalystX::Controller::ExtJS::Direct::Route::Chained;
 use Moose::Role;
-
-has 'arguments' => ( is => 'rw', isa => 'Int', lazy_build => 1 );
 
 sub _build_arguments {
     my ($self) = @_;
@@ -51,25 +61,21 @@ sub _build_arguments {
 
         $len += $parent->attributes->{CaptureArgs}[0];
     }
+    $len +=  $self->action->attributes->{DirectArgs}->[0] 
+        if($self->action->attributes->{DirectArgs});
     return $len || 0;
 }
 
-sub build_api {
-    my ($self) = @_;
-    return { name => $self->name, len => $self->arguments+0 };
-}
-
 sub build_url {
-    my ( $route, $c, $data ) = @_;
+    my ( $route, $data ) = @_;
     my @data = @{ $data || [] };
 	@data = grep { !ref $_ } @data;
 	my $captures_length =
       defined $route->action->attributes->{Args}->[0]
-      
       ? $route->arguments - $route->action->attributes->{Args}->[0]
       : 0;
     my @captures = splice( @data, 0, $captures_length );
-    return $c->uri_for( $route->action, [@captures], @data );
+    return $route->action, \@captures, \@data;
 }
 
 package CatalystX::Controller::ExtJS::Direct::Route::REST;
@@ -90,14 +96,12 @@ has 'crud_methods' => (
     }
 );
 
-#around '_build_arguments' => sub {
-#    my ( $orig, $self, $args ) = @_;
-#    my $arguments = $self->$orig();
-#    $arguments--
-#      if ( $arguments > 0 && ($self->crud_action eq 'create'
-#        || $self->crud_action eq 'update') );
-#    return $arguments;
-#};
+around '_build_arguments' => sub {
+    my ( $orig, $self, $args ) = @_;
+    my $arguments = $self->$orig();
+    $arguments++;
+    return $arguments;
+};
 
 sub _build_name {
     my ($self) = @_;
@@ -119,20 +123,38 @@ around 'request' => sub {
     return (
         %params,
 		method        => $self->crud_methods->{ $self->crud_action },
-        content_types => ['application/json']
+        accepted_content_types => ['application/json'],
+        content_types => ['application/json'],
+        content_type => 'application/json'
     );
 
 };
 
+# split a request in multiple requests if they affect more than one record
+
+sub prepare_request {
+	my ($self, $req) = @_;
+	$req->{data} = [$req->{data}] unless(ref $req->{data} eq 'ARRAY');
+	unless (@{$req->{data} || []}) {
+		return $req;
+	}
+	my $read_or_destroy = $self->crud_action eq 'read' || $self->crud_action eq 'destroy';
+	my $data = $req->{data}->[-1];
+	if(ref $data eq 'HASH' && keys %$data == 1) {
+		my ($key) =  keys %$data;
+		if(ref $data->{$key} eq 'HASH' && !$read_or_destroy) {
+			$req->{data} = $data->{$key};
+		} elsif ( ref $data->{$key} eq 'ARRAY' ) {
+			return map { {%$req, data => $_} } @{$data->{$key}};
+		} elsif (!ref $data->{$key} || !$read_or_destroy) {
+			$req->{data} = $data->{$key};
+		}
+	}
+	return $req;
+}
+
 package CatalystX::Controller::ExtJS::Direct::Route::REST::ExtJS;
 use Moose::Role;
-
-around '_build_arguments' => sub {
-    my ( $orig, $self, $args ) = @_;
-    my $arguments = $self->$orig();
-    $arguments++;
-    return $arguments;
-};
 
 package CatalystX::Controller::ExtJS::Direct::Route::Factory;
 

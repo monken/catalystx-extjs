@@ -1,0 +1,10 @@
+	<html>
+	<head>
+	<title>Ext.Direct and Catalyst</title>
+	<link rel="stylesheet" type="text/css" href="/static/ext/resources/css/ext-all.css" />
+	<script type="text/javascript" src="/static/ext/adapter/ext/ext-base.js"></script>
+	<script type="text/javascript" src="/static/ext/ext-all.js"></script>
+	<script type="text/javascript" src="/api/src"></script>
+	</head>
+	<body><p>Hello World!</p></body>
+	</html>

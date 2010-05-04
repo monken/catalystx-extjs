@@ -1,9 +1,7 @@
 package MyApp::Schema::Result::User;
 
-use strict;
-use warnings;
-
-use base qw(MyApp::Schema::Result);
+use Moose;
+extends 'MyApp::Schema::Result';
 
 __PACKAGE__->table('user');
 

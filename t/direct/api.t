@@ -23,10 +23,10 @@ my $api = {
             { name => 'subtract', len => 0 },
         ],
         REST => [
-            { name => 'create',  len => 1 },
-            { name => 'read',    len => 1 },
-            { name => 'update',  len => 1 },
-            { name => 'destroy', len => 1 },
+            { name => 'create',  len => 2 },
+            { name => 'read',    len => 2 },
+            { name => 'update',  len => 2 },
+            { name => 'destroy', len => 2 },
         ],
         User => [
             { name => 'list',    len => 0 },

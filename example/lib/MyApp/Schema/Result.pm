@@ -1,7 +1,8 @@
 package MyApp::Schema::Result;
-use strict;
-use warnings;
-use base 'DBIx::Class';
+
+use Moose;
+extends 'DBIx::Class';
+
 __PACKAGE__->load_components(qw(RandomColumns TimeStamp Core));
 
 __PACKAGE__->table('foo');

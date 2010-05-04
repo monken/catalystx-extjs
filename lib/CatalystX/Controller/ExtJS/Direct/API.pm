@@ -1,25 +1,25 @@
 package CatalystX::Controller::ExtJS::Direct::API;
-
+# ABSTRACT: API and router controller for Ext.Direct
 use Moose;
 extends qw(Catalyst::Controller::REST);
 
 use List::Util qw(first);
 use JSON::XS;
-use Catalyst::Plugin::SubRequest;
 use CatalystX::Controller::ExtJS::Direct::Route;
 
 __PACKAGE__->config(
-    {
-        action => {
-            end    => { ActionClass => '+CatalystX::Action::ExtJS::Serialize' },
-            index  => { Path        => undef },
-            router => { Path        => 'router' },
-            src => { Local => undef },
-        }
-    }
+    
+    action => {
+        end    => { ActionClass => '+CatalystX::Action::ExtJS::Serialize' },
+        index  => { Path        => undef },
+        router => { Path        => 'router' },
+        src => { Local => undef },
+    },
+    
+    default => 'application/json'
+    
 );
 
-__PACKAGE__->config( default => 'application/json' );
 
 has 'api' => ( is => 'rw', lazy_build => 1 );
 
@@ -43,10 +43,10 @@ sub _build_api {
         $name =~ s/:://;
         my $meta       = $controller->meta;
         next
-          unless ( $meta->does_role('CatalystX::Controller::ExtJS::Direct') );
-        my @methods;
+          unless ( $controller->can('is_direct') || $meta->does_role('CatalystX::Controller::ExtJS::Direct') );
+		my @methods;
         foreach my $method ( $controller->get_action_methods() ) {
-            next
+			next
               unless ( my $action = $controller->action_for( $method->name ) );
             next unless ( exists $action->attributes->{Direct} );
             my @routes =
@@ -78,7 +78,6 @@ sub router {
     my $reqs = ref $c->req->data eq 'ARRAY' ? $c->req->data : [ $c->req->data ];
     my $api    = $self->api;      # populates $self->routes
     my $routes = $self->routes;
-
     if ( keys %{ $c->req->body_params }
         && ( my $params = $c->req->body_params ) )
     {
@@ -101,59 +100,59 @@ sub router {
 	my @requests;
 	
 	foreach my $req (@$reqs) {
-		$req->{data} = [$req->{data}] unless(ref $req->{data} eq 'ARRAY');
-		unless (@{$req->{data} || []}) {
-			push(@requests, $req);
-			next;
-		}
-		my $data = $req->{data}->[-1];
-		if(ref $data eq 'HASH' && keys %$data == 1) {
-			my ($key) =  keys %$data;
-			if(ref $data->{$key} eq 'HASH') {
-				$req->{data} = $data->{$key};
-			} elsif ( ref $data->{$key} eq 'ARRAY' ) {
-				push(@requests, map { {%$req, data => $_} } @{$data->{$key}});
-				next;
-			} else {
-			    $req->{data} = $data->{$key};
-			}
-		}
-		push(@requests, $req);
-	}
-	
-    my @res;
-    foreach my $req (@requests) {
-		$req->{data} = [$req->{data}] if(ref $req->{data} ne "ARRAY");
-		unless ( $req && $req->{action}
+        unless ( $req && $req->{action}
             && exists $routes->{ $req->{action} }
             && exists $routes->{ $req->{action} }->{ $req->{method} } )
         {
             $self->status_bad_request( $c, { message => 'method not found' } );
             return;
         }
+		 my $route = $routes->{ $req->{action} }->{ $req->{method} };
+		
+		push(@requests, $route->prepare_request($req));
+
+	}
+	
+    my @res;
+	REQUESTS:
+	foreach my $req (@requests) {
+		$req->{data} = [$req->{data}] if(ref $req->{data} ne "ARRAY");
 
         my $route = $routes->{ $req->{action} }->{ $req->{method} };
-        my $url = $route->build_url( $c, $req->{data} );
+		my $params = @{$req->{data}} && ref $req->{data}->[-1] eq 'HASH' ? $req->{data}->[-1] : undef;
 
-        unless ($url) {
-            $self->status_bad_request( $c,
-                { message => 'invalid number of argument' } );
-            return;
-        }
+		my $body;
+		{
+			local $c->{response} = $c->response_class->new({});
+			local $c->{stash} = {};
+			local $c->{request} = $c->req;
+			
+			$c->req->parameters($params);
+			$c->req->body_parameters($params);
+			my %req = $route->request($req);
+			$c->req($c->request_class->new(%{$c->req}, %req));
+            eval {
+                $c->visit($route->build_url( $req->{data} ));
+                my $response = $c->res;
+				if ( $response->content_type eq 'application/json' ) {
+                    my $json = decode_json( $response->body );
+					$json = $json->{data} if(ref $json eq 'HASH' && exists $json->{success} && exists $json->{data});
+					$body = $json;
+				} else {
+					$body = $response->body;
+				}
+            } or do {
+				push(@res, { type => 'exception', tid => $req->{tid}, message => "$@" });
+                next REQUESTS;
+			};
+			
+			
+		}
 
-        my $response =
-          Catalyst::Plugin::SubRequest::sub_request_response( $c,
-            { path => $url->path, $route->request($req) },
-            undef, (@{$req->{data}} && ref $req->{data}->[-1] eq 'HASH'	? $req->{data}->[-1] : undef) );
-
-        if ( $response->content_type eq 'application/json' ) {
-			my $json = decode_json( $response->body );
-			$json = $json->{data} if($json->{success});
-            $response->body( $json );
-        }
         my $res = { map { $_ => $req->{$_} } qw(action method tid type) };
 	    $c->stash->{upload} = 1 if ( $req->{upload} );
-        push( @res, { %$res, result => $response->body } );
+        push( @res, { %$res, result => $body } );
+
     }
     $c->stash->{rest} = @res != 1 ? \@res : $res[0];
 

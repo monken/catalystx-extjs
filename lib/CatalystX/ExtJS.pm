@@ -4,6 +4,18 @@ package CatalystX::ExtJS;
 
 __END__
 
+=head1 TUTORIALS
+
+L<CatalystX::ExtJS::Tutorial>.
+
+=over
+
+=item L<CatalystX::ExtJS::Tutorial::Direct>
+
+How to use Ext.Direct and L<CatalystX::Controller::ExtJS::Direct::API>.
+
+=back
+
 
 =head1 MODULES
 
