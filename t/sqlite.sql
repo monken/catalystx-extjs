@@ -1,6 +1,6 @@
 -- 
 -- Created by SQL::Translator::Producer::SQLite
--- Created on Tue May  4 18:29:16 2010
+-- Created on Wed May  5 11:23:59 2010
 -- 
 
 

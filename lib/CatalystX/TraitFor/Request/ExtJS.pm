@@ -1,4 +1,5 @@
 package CatalystX::TraitFor::Request::ExtJS;
+# ABSTRACT: Sets the request method via a query parameter
 use Moose::Role;
 
 use namespace::autoclean;
@@ -23,6 +24,8 @@ around 'method' => sub {
 1;
 
 __END__
+
+=head1 METHODS
 
 =head2 is_extjs_upload
 

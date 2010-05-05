@@ -1,12 +1,14 @@
 package CatalystX::Action::ExtJS::REST;
 # ABSTRACT: Construct a new request class
 use Moose;
-extends 'Catalyst::Action::REST';
+extends 'Catalyst::Action';
 
 use Catalyst::Utils;
 use Carp;
 
 my @traits = qw(Catalyst::TraitFor::Request::REST CatalystX::TraitFor::Request::ExtJS);
+
+# not sure if this is the best place to mess with the request class
 
 sub new {
     my $class    = shift;
@@ -20,12 +22,11 @@ sub new {
     
     return $class->next::method(@_) if $req_class->can('is_ext_upload');
 
-    my $meta = Moose::Meta::Class->create_anon_class(
+    my $meta = $req_class->meta->create_anon_class(
         superclasses => [$req_class],
         roles        => [@traits],
         cache        => 1
     );
-    $meta->add_method( meta => sub { $meta } );
     $meta->make_immutable;
     $app->request_class( $meta->name );
     return $class->next::method(@_);
