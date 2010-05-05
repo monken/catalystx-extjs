@@ -1,6 +1,6 @@
 Revision history for CatalystX-ExtJS
 
-1.101240 2010-05-03
+1.101250 2010-05-03
   - Ext.Direct support
   - Ext.Direct API Controller
   - REST uses now path_to to find form files instead of hard-coded path
@@ -12,6 +12,9 @@ Revision history for CatalystX-ExtJS
   - caching is disabled in debug mode
   - ditch Subrequest in favor of visit()
   - works with latest C::R::REST
+  - Got rid of C::R::REST dispatcher in ::REST class
+  - SELECT ... FOR UPDATE for update & delete
+  - use transactions
 
 0.11 2010-01-03
   - Order by me.* (fixes ambiguous errors)

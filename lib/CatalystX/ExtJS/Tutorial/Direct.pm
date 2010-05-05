@@ -103,15 +103,15 @@ Open the C<index> template and add this to the head area:
 
  <script type="text/javascript" src="/api/src"></script>
 
-The API is now available from the variable C<Ext_PROVIDER>.
+The API is now available from the variable C<Ext.app.REMOTING_API>.
 
 	
 Fire up your favourite browser and go to L<http://localhost:3000/>.
 Open the debugger and type in the console:
 
- Ext.Direct.addProvider(Ext_PROVIDER);
+ Ext.Direct.addProvider(Ext.app.REMOTING_API);
  // This will set up the classes and methods
- // Ext_PROVIDER is provided by /api/src
+ // Ext.app.REMOTING_API is provided by /api/src
  Calculator.add(3, 2, function(res){alert(res)});
 	
 And watch the request and response. Next we call the C<echo> method.
@@ -229,7 +229,7 @@ Add a new controller C<lib/MyApp/Controller/User/DBIC.pm> and paste:
 Access L<http://localhost:3000/> in your browser and open the console to
 play around with the DBIC API:
 
- Ext.Direct.addProvider(Ext_PROVIDER);
+ Ext.Direct.addProvider(Ext.app.REMOTING_API);
  
  // get all records from the model
  UserDBIC.list({}, function(res){console.log(res)});

@@ -1,7 +1,3 @@
--- 
--- Created by SQL::Translator::Producer::SQLite
--- Created on Tue May  4 19:16:02 2010
--- 
 
 
 BEGIN TRANSACTION;

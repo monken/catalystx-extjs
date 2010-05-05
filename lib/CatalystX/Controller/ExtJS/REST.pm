@@ -231,15 +231,24 @@ sub object : Chained('/') NSPathPart Args ActionClass('+CatalystX::Action::ExtJS
     $config->{resultset} ||= $self->default_resultset;
     croak "Need resultset and schema" unless($config->{resultset} && $config->{schema});
     $c->stash->{extjs_formfu_model_config} = $config;
+
+    my $object = $c->model(join('::', $config->{schema}, $config->{resultset}));
+
+    my $req_method = lc($c->req->method);
     
-    if(!defined $id && lc($c->req->method) eq 'get') {
-        
-        eval { $c->detach; };
-        warn $@;
+    unless(defined $id || $req_method ne 'put') {
+        my ($pk, $too_much) = $object->result_source->primary_columns;
+        croak 'Not able to process result classes with multiple primary keys' if($too_much);
+        $id = $c->req->param($pk);
     }
     
-    my $object = $c->model(join('::', $config->{schema}, $config->{resultset}));
-        
+    if(!defined $id && $req_method eq 'get') {
+        $c->forward('list');
+        return;
+    }
+    
+    my $guard = $c->model($config->{schema})->txn_scope_guard;
+    
     if(my $rs = $self->_extjs_config->{default_rs_method}) {
         if($object->can($rs)) {
             $c->log->debug(qq(Calling default resultset method $rs)) if($c->debug);
@@ -249,28 +258,31 @@ sub object : Chained('/') NSPathPart Args ActionClass('+CatalystX::Action::ExtJS
         }
     }
 
-    # Get row object
-    
-    unless(defined $id || lc($c->req->method) ne 'put') {
-        my ($pk, $too_much) = $object->result_source->primary_columns;
-        croak 'Not able to process result classes with multiple primary keys' if($too_much);
-        $id = $c->req->param($pk);
-    }
-    
     my $method = $config->{find_method} || $self->_extjs_config->{find_method};
     if (defined $id && defined $object) {
-		# wait for DBIx::Class
-		# $object = $object->search( undef, { for => 'update' });
+		$object = $object->search( undef, { for => 'update' })
+            if($req_method ne 'get');
         $object = $object->$method($id);
         $c->stash->{object} = $object;
     }
 	
     $c->stash->{form} =
-      $self->get_form($c, $self->path_to_forms(lc($c->req->method)));
+      $self->get_form($c, $self->path_to_forms($req_method));
+    
+    if($req_method eq 'get') {
+        $c->forward('object_GET');
+    } elsif($req_method eq 'post') {
+        $c->forward('object_POST');
+    } elsif($req_method eq 'put') {
+        $c->forward('object_PUT');
+    } elsif($req_method eq 'delete') {
+        $c->forward('object_DELETE');
+    }
+    $guard->commit;
 }
 
 
-sub object_PUT {
+sub object_PUT : Private {
     my ( $self, $c ) = @_;
     my $object = $c->stash->{object};
     my $form = $c->stash->{form};
@@ -309,7 +321,7 @@ sub object_PUT_or_POST {
 
 }
 
-sub object_POST {
+sub object_POST : Private {
     my ( $self, $c ) = @_;
     my $form = $c->stash->{form};
     
@@ -340,7 +352,7 @@ sub object_POST {
 
 }
 
-sub object_GET {
+sub object_GET : Private {
     my ( $self, $c ) = @_;
     my $form = $c->stash->{form};
 
@@ -353,7 +365,7 @@ sub object_GET {
     }
 }
 
-sub object_DELETE {
+sub object_DELETE : Private {
     my ( $self, $c ) = @_;
     if($c->stash->{object}) {
         $c->stash->{object}->delete;
