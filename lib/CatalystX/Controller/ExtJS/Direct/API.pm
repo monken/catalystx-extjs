@@ -31,7 +31,7 @@ sub index { }
 
 sub src {
     my ($self, $c) = @_;
-    $c->res->body( 'var Ext_PROVIDER = ' . $self->encoded_api . ';' );
+    $c->res->body( 'Ext.app.REMOTING_API = ' . $self->encoded_api . ';' );
 }
 
 sub _build_api {

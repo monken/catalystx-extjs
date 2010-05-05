@@ -7,7 +7,7 @@
 // Application instance for showing user-feedback messages.
 var App = new Ext.App({});
 
-Ext.Direct.addProvider(Ext_PROVIDER);
+Ext.Direct.addProvider(Ext.app.REMOTING_API);
 
 
 // Typical JsonReader.  Notice additional meta-data params for defining the core attributes of your json-response
