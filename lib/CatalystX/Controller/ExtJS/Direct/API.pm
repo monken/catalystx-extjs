@@ -4,7 +4,7 @@ use Moose;
 extends qw(Catalyst::Controller::REST);
 
 use List::Util qw(first);
-use JSON::XS;
+use JSON::DWIW;
 use CatalystX::Controller::ExtJS::Direct::Route;
 
 __PACKAGE__->config(
@@ -70,7 +70,7 @@ sub _build_api {
 
 sub encoded_api {
     my ( $self, $c ) = @_;
-    return encode_json( $self->api );
+    return JSON::DWIW->new->to_json( $self->api );
 }
 
 sub router {
@@ -135,7 +135,7 @@ sub router {
                 $c->visit($route->build_url( $req->{data} ));
                 my $response = $c->res;
 				if ( $response->content_type eq 'application/json' ) {
-                    my $json = decode_json( $response->body );
+                    my $json = JSON::DWIW->new->from_json( $response->body );
 					$json = $json->{data} if(ref $json eq 'HASH' && exists $json->{success} && exists $json->{data});
 					$body = $json;
 				} else {
