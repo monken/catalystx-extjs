@@ -153,17 +153,28 @@ sub list : Chained('/') NSListPathPart Args Direct {
     if($validate_options->has_errors) {
         $self->status_bad_request($c, message => 'One ore more parameters did not pass the validation');
         $c->stash->{rest} = { errors => $validate_options->validation_response->{errors} };
-        $c->detach;
         return;
     }
 
     my $rs = $c->model($model);
     $rs = $self->paging_rs($c, $form, $rs);
+    
     my @args = @{$c->req->args};
+    my $data = $c->req->data;
+    if($data && (ref $data eq 'ARRAY') && ref $data->[0] eq 'ARRAY') {
+        $data = $data->[0];
+        for(my $i = 0; $i < @$data; $i++) {
+            my @argv = @{$data->[$i+1]} if(ref $data->[$i+1] eq 'ARRAY');
+            push(@args, join(',', $data->[$i], @argv));
+            $i++ if(@argv);
+        }
+    }
+    push(@args, $c->req->param('resultset'));
+    
     unshift(@args, $self->_extjs_config->{default_rs_method});
     for my $rs_method (@args) {
         next unless($rs_method);
-        if($rs_method && $rs_method ne "all" && DBIx::Class::ResultSet->can($rs_method)) {
+        if($rs_method && DBIx::Class::ResultSet->can($rs_method)) {
             $c->log->warn('Possibly malicious method "'.$rs_method.'" on resultset '.$rs_method.' has not been called');
             next;
         }
@@ -616,8 +627,8 @@ You can even supply arguments to that method using a comma separated list:
   
   $c->model('DBIC::Users')->active($c, 'arg1', 'arg2')->all;
 
-You can chain those method calls to any length. You cannot access resultset method which are
-inherited from L<DBIx::Class::ResultSet>, except C<all>. This is a security restriction because
+You can chain those method calls to any length. Though, you cannot access resultset method which are
+inherited from L<DBIx::Class::ResultSet>. This is a security restriction because
 an attacker could call C<http://localhost:3000/users/delete> which will lead to 
 C<< $c->model('DBIC::Users')->delete >>. This would remove all rows from C<DBIC::Users>!
 
@@ -632,7 +643,7 @@ This will lead to the following chain:
   
   $c->model('DBIC::Users')->restrict($c)->active($c, 'arg1', 'arg2')->all;
 
-  # and even with GET, POST and PUT
+  # same for GET, POST and PUT
   # http://localhost:3000/user/1234
   
   $c->model('DBIC::Users')->restrict($c)->find(1234);

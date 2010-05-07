@@ -120,8 +120,7 @@ sub router {
 
         my $route = $routes->{ $req->{action} }->{ $req->{method} };
 		my $params = @{$req->{data}} && ref $req->{data}->[-1] eq 'HASH' ? $req->{data}->[-1] : undef;
-
-		my $body;
+    	my $body;
 		{
 			local $c->{response} = $c->response_class->new({});
 			local $c->{stash} = {};
@@ -134,7 +133,7 @@ sub router {
             eval {
                 $c->visit($route->build_url( $req->{data} ));
                 my $response = $c->res;
-				if ( $response->content_type eq 'application/json' ) {
+                if ( $response->content_type eq 'application/json' ) {
                     my $json = JSON::Any->new->decode( $response->body );
 					$json = $json->{data} if(ref $json eq 'HASH' && exists $json->{success} && exists $json->{data});
 					$body = $json;
@@ -142,9 +141,10 @@ sub router {
 					$body = $response->body;
 				}
             } or do {
-				push(@res, { type => 'exception', tid => $req->{tid}, message => "$@" });
+            	push(@res, { type => 'exception', tid => $req->{tid}, message => "$@".$c->response->body });
                 next REQUESTS;
 			};
+			
 			
 			
 		}

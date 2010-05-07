@@ -12,4 +12,15 @@ sub extjs_rest_user {
     return $self->search({ id => { LIKE => '%'.$ending }  });
 }
 
+sub none {
+    shift->search({ id => undef });
+}
+
+sub not {
+    my ($self, $c, $not) = @_;
+    $self->search({ id => { '!=' => $not } });
+}
+
+sub foo { shift }
+
 1;

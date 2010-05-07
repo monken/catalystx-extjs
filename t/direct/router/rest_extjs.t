@@ -29,6 +29,12 @@ ok(
 
 count_users(3);
 
+count_users(1, [{ending => '2'}]);
+
+count_users(0, [{resultset => 'none'}]);
+
+count_users(0, [['foo', not => [1], not => [2], not => [3], 'not']]);
+
 ok(
     $mech->request(
         POST $api->{url},
@@ -59,6 +65,7 @@ count_users(0);
 
 sub count_users {
 	my $user = shift;
+    my $data = shift || [];
 	ok(
 		$mech->request(
 			POST $api->{url},
@@ -68,7 +75,7 @@ sub count_users {
 					action => 'User',
 					method => 'list',
 					tid    => $tid,
-					data   => [],
+					data   => $data,
 					type   => 'rpc',
 				}
 			)
