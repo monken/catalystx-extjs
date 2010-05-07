@@ -10,12 +10,10 @@ use HTML::FormFu::ExtJS 0.076;
 use HTML::FormFu::Util qw( _merge_hashes );
 use Path::Class;
 use HTML::Entities;
-use JSON qw(encode_json);
 use Scalar::Util qw/ weaken /;
 use Config::Any;
 use Lingua::EN::Inflect;
-
-use JSON::XS;
+use JSON::Any;
 
 use Moose;
 
@@ -449,7 +447,7 @@ sub end : ActionClass('Serialize') {
           )
           || 'rest';
         my $output;
-        eval { $output = JSON->new->encode( $c->stash->{$stash_key} ); };
+        eval { $output = JSON::Any->new->encode( $c->stash->{$stash_key} ); };
 
         $c->res->content_type('text/html');
         $c->res->output( encode_entities($output) );
