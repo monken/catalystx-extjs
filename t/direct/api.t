@@ -29,11 +29,11 @@ my $api = {
             { name => 'destroy', len => 2 },
         ],
         User => [
-            { name => 'list',    len => 0 },
             { name => 'create',  len => 1 },
             { name => 'read',    len => 1 },
             { name => 'update',  len => 1 },
             { name => 'destroy', len => 1 },
+            { name => 'list',    len => 1 },
         ],
         NestedController => [
             { name => 'index', len => 0 },

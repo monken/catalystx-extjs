@@ -1,30 +1,58 @@
 package CatalystX::Controller::ExtJS::REST;
 # ABSTRACT: RESTful interface to dbic objects
-use base qw(Catalyst::Controller::REST);
+
+use Moose;
+extends qw(Catalyst::Controller::REST);
 
 use Config::Any;
-use Scalar::Util qw/ weaken /;
+use Scalar::Util ();
 use Carp qw/ croak /;
-
 use HTML::FormFu::ExtJS 0.076;
-use HTML::FormFu::Util qw( _merge_hashes );
 use Path::Class;
 use HTML::Entities;
-use Scalar::Util qw/ weaken /;
-use Config::Any;
 use Lingua::EN::Inflect;
 use JSON::Any;
 
-use Moose;
-
 use Moose::Util::TypeConstraints;
-
 subtype 'PathClassDir', as 'Path::Class::Dir';
 coerce 'PathClassDir', from 'ArrayRef', via { Path::Class::Dir->new( @{$_[0]} ) };
 coerce 'PathClassDir', from 'Str', via { Path::Class::Dir->new( $_[0] ) };
-
 subtype 'PathClassFile', as 'Path::Class::File';
 no Moose::Util::TypeConstraints;
+
+__PACKAGE__->config(
+    actions => {
+        begin => {
+            ActionClass => '+CatalystX::Action::ExtJS::Deserialize',
+        },
+        end => {
+            ActionClass => 'Serialize',
+        },
+        list => {
+            Chained        => '/', 
+            NSListPathPart => undef, 
+            Args           => undef, 
+            Direct         => undef, 
+            DirectArgs     => 1,
+        },
+        base => {
+            Chained     => '/',
+            NSPathPart  => undef,
+            CaptureArgs => 1,
+        },
+        object => {
+            Chained     => '/',
+            NSPathPart  => undef,
+            Args        => undef,
+            ActionClass => '+CatalystX::Action::ExtJS::REST',
+            Direct      => undef,
+        },
+        object_GET    => { Private => undef },
+        object_PUT    => { Private => undef },
+        object_POST   => { Private => undef },
+        object_DELETE => { Private => undef },
+    }
+);
 
 has '_extjs_config' => ( is => 'rw', isa => 'HashRef', builder => '_extjs_config_builder', lazy => 1 );
 
@@ -140,7 +168,7 @@ sub validate_options {
     return $form;
 }
 
-sub list : Chained('/') NSListPathPart Args Direct {
+sub list {
     my ( $self, $c ) = @_;
 	$self->clear_caches if($c->debug);
     my $form = $self->get_form($c, $self->list_base_file);
@@ -159,33 +187,36 @@ sub list : Chained('/') NSListPathPart Args Direct {
     my $rs = $c->model($model);
     $rs = $self->paging_rs($c, $form, $rs);
     
-    my @args = @{$c->req->args};
+    # collect rs methods from URI, body and request param
+    my @args = map {$_ => [] } @{$c->req->args};
     my $data = $c->req->data;
     if($data && (ref $data eq 'ARRAY') && ref $data->[0] eq 'ARRAY') {
         $data = $data->[0];
         for(my $i = 0; $i < @$data; $i++) {
-            my @argv = @{$data->[$i+1]} if(ref $data->[$i+1] eq 'ARRAY');
-            push(@args, join(',', $data->[$i], @argv));
-            $i++ if(@argv);
+            my $argv = $data->[$i+1] if(ref $data->[$i+1]);
+            $argv = [$argv] unless(ref $argv eq 'ARRAY');
+            push(@args, $data->[$i], $argv);
+            $i++ if(ref $data->[$i+1]);
         }
     }
-    push(@args, $c->req->param('resultset'));
+    push(@args, map { $_ => [] } $c->req->param('resultset'));
+    unshift(@args, $self->_extjs_config->{default_rs_method} => []);
     
-    unshift(@args, $self->_extjs_config->{default_rs_method});
-    for my $rs_method (@args) {
-        next unless($rs_method);
-        if($rs_method && DBIx::Class::ResultSet->can($rs_method)) {
-            $c->log->warn('Possibly malicious method "'.$rs_method.'" on resultset '.$rs_method.' has not been called');
+    for(my $i = 0; $i < @args; $i+=2) {
+        next unless(my $rs_method = $args[$i]);
+        my ($m, @params) = split(/,/, $rs_method);
+        if($rs_method && DBIx::Class::ResultSet->can($m)) {
+            $c->log->warn('Possibly malicious method "'.$m.'" on resultset '.$m.' has not been called');
             next;
         }
-        my ($m, @params) = split(/,/, $rs_method);
+        push(@params, @{$args[$i+1]});
         if($rs->can($m)) {
             if($c->debug) {
                 my $debug = qq(Calling resultset method $m);
                 $debug .= q( with arguments ').join(q(', '), @params).q(') if(@params);
                 $c->log->debug($debug);
             }
-            $rs = $rs->$m($c,@params);
+            $rs = $rs->$m($c, @params);
         } elsif($c->debug) {
             $c->log->debug(qq(Resultset method $m could not be found));
         }
@@ -202,7 +233,7 @@ sub list : Chained('/') NSListPathPart Args Direct {
     $self->status_ok( $c, entity => $grid_data);
 }
 
-sub paging_rs : Private {
+sub paging_rs {
     my ($self, $c, $form, $rs) = @_;
     my $params = $c->req->params;
     
@@ -225,13 +256,13 @@ sub paging_rs : Private {
     return $paged;
 }
 
-sub base : Chained('/') NSPathPart CaptureArgs(1) {
+sub base {
     my ( $self, $c, $id ) = @_;
     $self->object($c, $id);
 }
 
 
-sub object : Chained('/') NSPathPart Args ActionClass('+CatalystX::Action::ExtJS::REST') Direct {
+sub object {
     my ( $self, $c, $id ) = @_;
 	croak $self->form_base_file." cannot be found" unless(-e $self->form_base_file);
 	$self->clear_caches if($c->debug);
@@ -291,7 +322,7 @@ sub object : Chained('/') NSPathPart Args ActionClass('+CatalystX::Action::ExtJS
 }
 
 
-sub object_PUT : Private {
+sub object_PUT {
     my ( $self, $c ) = @_;
     my $object = $c->stash->{object};
     my $form = $c->stash->{form};
@@ -330,7 +361,7 @@ sub object_PUT_or_POST {
 
 }
 
-sub object_POST : Private {
+sub object_POST {
     my ( $self, $c ) = @_;
     my $form = $c->stash->{form};
     
@@ -361,7 +392,7 @@ sub object_POST : Private {
 
 }
 
-sub object_GET : Private {
+sub object_GET {
     my ( $self, $c ) = @_;
     my $form = $c->stash->{form};
 
@@ -374,7 +405,7 @@ sub object_GET : Private {
     }
 }
 
-sub object_DELETE : Private {
+sub object_DELETE {
     my ( $self, $c ) = @_;
     if($c->stash->{object}) {
         $c->stash->{object}->delete;
@@ -411,7 +442,7 @@ sub get_form {
 	
     my $context_stash = $self->_extjs_config->{context_stash};
     $form->stash->{$context_stash} = $c;
-    weaken( $form->stash->{$context_stash} );
+    Scalar::Util::weaken( $form->stash->{$context_stash} );
 	return $form;
 }
 
@@ -442,12 +473,7 @@ sub handle_uploads {
 }
 
 
-sub begin : ActionClass('+CatalystX::Action::ExtJS::Deserialize') {
-    my ( $self, $c ) = @_;
-    $self->next::method($c);
-}
-
-sub end : ActionClass('Serialize') {
+sub end {
     my ( $self, $c ) = @_;
     $self->next::method($c);
     if ( $c->req->is_ext_upload ) {
