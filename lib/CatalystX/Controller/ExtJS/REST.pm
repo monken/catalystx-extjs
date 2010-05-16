@@ -251,7 +251,8 @@ sub paging_rs {
     undef $sort unless($form->get_all_element({ nested_name => $sort }));
     
     my $paged = $rs->search(undef, { offset => $start, rows => $limit || undef});
-    $paged = $paged->search(undef, { order_by => [ { $direction => 'me.' . $sort } ] })
+    my $me = $rs->current_source_alias;
+    $paged = $paged->search(undef, { order_by => [ { $direction => join('.', $me, $sort) } ] })
       if $sort;
     return $paged;
 }
