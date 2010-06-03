@@ -3,6 +3,7 @@ package CatalystX::Controller::ExtJS::REST;
 
 use Moose;
 extends qw(Catalyst::Controller::REST);
+use MooseX::MethodAttributes;
 
 use Config::Any;
 use Scalar::Util ();

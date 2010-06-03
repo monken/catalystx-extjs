@@ -2,6 +2,7 @@ package CatalystX::Controller::ExtJS::Direct::API;
 # ABSTRACT: API and router controller for Ext.Direct
 use Moose;
 extends qw(Catalyst::Controller::REST);
+use MooseX::MethodAttributes;
 
 use List::Util qw(first);
 use JSON::Any;
