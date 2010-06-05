@@ -135,7 +135,8 @@ sub router {
                 $c->visit($route->build_url( $req->{data} ));
                 my $response = $c->res;
                 if ( $response->content_type eq 'application/json' ) {
-                    my $json = JSON::Any->new->decode( $response->body );
+                    (my $res_body = $response->body) =~ s/^\xEF\xBB\xBF//; # remove BOM
+                    my $json = JSON::Any->new->decode( $res_body );
 					$json = $json->{data} if(ref $json eq 'HASH' && exists $json->{success} && exists $json->{data});
 					$body = $json;
 				} else {
