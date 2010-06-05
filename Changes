@@ -1,6 +1,6 @@
 Revision history for CatalystX-ExtJS
 
-1.101250 2010-05-03
+1.101560 2010-06-05
   - Ext.Direct support
   - Ext.Direct API Controller
   - REST uses now path_to to find form files instead of hard-coded path

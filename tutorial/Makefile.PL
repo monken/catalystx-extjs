@@ -6,10 +6,13 @@ use inc::Module::Install;
 name 'MyApp';
 all_from 'lib\MyApp.pm';
 
-requires 'Catalyst::Runtime' => '5.80018';
+requires 'Catalyst::Runtime' => '5.80024';
 requires 'Catalyst::Plugin::ConfigLoader';
 requires 'Catalyst::Plugin::Static::Simple';
 requires 'Catalyst::Action::RenderView';
+requires 'Catalyst::Plugin::Unicode';
+requires 'Catalyst::View::TT::Alloy';
+requires 'Catalyst::Controller::DBIC::API::RPC' => '2.002';
 requires 'Moose';
 requires 'namespace::autoclean';
 requires 'Config::General'; # This should reflect the config file format you've chosen
