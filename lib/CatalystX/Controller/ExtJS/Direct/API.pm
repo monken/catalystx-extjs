@@ -171,7 +171,7 @@ __END__
 
 =head1 ACTIONS
 
-=head2 rpc
+=head2 router
 
 Every request to the API is going to hit this action, since the API's url will point to this action. 
 
@@ -180,7 +180,7 @@ You can change the url to this action via the class configuration.
 Example:
 	
   package MyApp::Controller::API;
-  __PACKAGE__->config( action => { rpc => { Path => 'callme' } } );
+  __PACKAGE__->config( action => { router => { Path => 'callme' } } );
   1;
   
 The router is now available at C<< /api/callme >>.
