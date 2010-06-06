@@ -36,13 +36,13 @@ Create C<lib/MyApp/View/TT.pm> with:
  extends 'Catalyst::View::TT::Alloy';
 
  __PACKAGE__->config( {
- 		CATALYST_VAR => 'c',
- 		INCLUDE_PATH => [ MyApp->path_to( 'root', 'src' ) ]
- 	} );
+         CATALYST_VAR => 'c',
+         INCLUDE_PATH => [ MyApp->path_to( 'root', 'src' ) ]
+     } );
  1;
 
 =head2 Step 3: Adjust the Root Controller
-	
+    
 The JavaScript sources should be generated through the view we just
 created. For this to work, we need a controller, which handles that. 
 We can use the C<Root> controller which was created when
@@ -85,8 +85,8 @@ Now we create an action which will route any request to C</js/*> to
 the according template in C<root/src/js>.
 
  sub js : Path : Args {
-	my ($self, $c, $template) = @_;
-	$c->stash->{template} = $template;
+    my ($self, $c, $template) = @_;
+    $c->stash->{template} = $template;
  }
 
 =head2 Step 6: Add a DBIC Model
@@ -111,12 +111,12 @@ C<lib/MyApp/Schema/Result/User.pm>:
  extends 'DBIx::Class::Core';
  __PACKAGE__->table('user');
  __PACKAGE__->add_columns(
-	id => { is_auto_increment => 1, data_type => 'integer' },
-	qw(email first last)
+    id => { is_auto_increment => 1, data_type => 'integer' },
+    qw(email first last)
  );
  __PACKAGE__->set_primary_key('id');
  1;
-	
+    
 To glue the DBIC schema and Catalyst together we create a model called
 C<MyApp::Model::DBIC>. Paste the following in C<lib/MyApp/Model/DBIC.pm>:
 
@@ -128,21 +128,21 @@ C<MyApp::Model::DBIC>. Paste the following in C<lib/MyApp/Model/DBIC.pm>:
  # which means that the database is reset
  # with every start of the application
  __PACKAGE__->config({
-	schema_class => 'MyApp::Schema',
-	connect_info => ['dbi:SQLite:dbname=:memory:']
+    schema_class => 'MyApp::Schema',
+    connect_info => ['dbi:SQLite:dbname=:memory:']
  });
  
  # this initializes the empty sqlite database 
  # and inserts one record
  after BUILD => sub {
-	my $self = shift;
-	my $schema = $self->schema;
-	$schema->deploy;
-	$schema->resultset('User')->create({
-	    email => 'onken@netcubed.de', 
-	    first => 'Moritz', 
-	    last => 'Onken'
-	});
+    my $self = shift;
+    my $schema = $self->schema;
+    $schema->deploy;
+    $schema->resultset('User')->create({
+        email => 'onken@netcubed.de', 
+        first => 'Moritz', 
+        last => 'Onken'
+    });
  };
  
  1;
