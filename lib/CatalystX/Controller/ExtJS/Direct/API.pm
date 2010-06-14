@@ -31,6 +31,7 @@ sub index { }
 
 sub src {
     my ($self, $c) = @_;
+    $c->res->content_type('application/javascript');
     $c->res->body( 'Ext.app.REMOTING_API = ' . $self->encoded_api . ';' );
 }
 
