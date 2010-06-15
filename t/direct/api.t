@@ -17,6 +17,9 @@ my $api = {
     url     => '/api/router',
     type    => 'remoting',
     actions => {
+        JSON => [
+            { name => 'index', len => 0 },
+        ],
         Calculator => [
             { name => 'add',      len => 2 },
             { name => 'upload',   len => 0 },
@@ -53,7 +56,7 @@ is_deeply( $json, $api, 'expected api' );
 my $lens = 0;
 my $content = $mech->content;
 $lens++ while( $content =~ /"len":(\d+)/g );
-is($lens, 13 );
+is($lens, 14 );
 
 # $api = MyApp->controller('API')->api;
 # use Data::Dumper; print Dumper $api;

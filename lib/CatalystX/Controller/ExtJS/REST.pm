@@ -3,6 +3,7 @@ package CatalystX::Controller::ExtJS::REST;
 
 use Moose;
 extends qw(Catalyst::Controller::REST);
+use MooseX::MethodAttributes;
 
 use Config::Any;
 use Scalar::Util ();
@@ -99,7 +100,9 @@ sub _extjs_config_builder {
         find_method => 'find',
     };
     my $self_config   = $self->config || {};
-    my $parent_config = $c->config->{'ControllerX::ExtJS::REST'} || {};
+    my $parent_config = $self->merge_config_hashes( 
+        $c->config->{'ControllerX::ExtJS::REST'} || {}, 
+        $c->config->{'ControllerX::Controller::ExtJS::REST'} || {} );
 
     # merge hashes with right hand precedence
     my $merged_config = $self->merge_config_hashes( $defaults, $self_config );

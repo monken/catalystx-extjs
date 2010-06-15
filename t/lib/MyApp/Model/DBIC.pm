@@ -13,7 +13,7 @@ __PACKAGE__->config({
 after BUILD => sub {
     my $self = shift;
     my $schema = $self->schema;
-    eval('use SQL::Translator 0.09003;');
+    eval('use SQL::Translator 0.11005;');
     if ($@) {
         my $sql;
         {

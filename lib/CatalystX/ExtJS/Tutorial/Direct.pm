@@ -20,7 +20,7 @@ Catalyst actions when it comes to a request.
 Please find a working example of the tutorial at C</tutorial>.
 
 =head1 EXAMPLES
-	
+    
 =head2 Simple Calculator
 
 B<Run steps 1 to 5 from L<CatalystX::ExtJS::Tutorial/FIRST STEPS>.>
@@ -39,19 +39,19 @@ the result:
  use JSON::XS;
 
  sub add : Chained('/') : Path : CaptureArgs(1) {
-	my($self,$c, $arg) = @_;
-	$c->stash->{add} = $arg;
+    my($self,$c, $arg) = @_;
+    $c->stash->{add} = $arg;
  }
 
  sub add_to : Chained('add') : PathPart('to') : Args(1) : Direct('add') {
-	my($self,$c,$arg) = @_;
-	$c->res->body( $c->stash->{add} + $arg );
+    my($self,$c,$arg) = @_;
+    $c->res->body( $c->stash->{add} + $arg );
  }
-	
+    
  sub echo : Local : Direct : DirectArgs(1) {
-	my ($self, $c) = @_;
-	$c->res->content_type('application/json');
-	$c->res->body(encode_json($c->req->data));
+    my ($self, $c) = @_;
+    $c->res->content_type('application/json');
+    $c->res->body(encode_json($c->req->data));
  }
 
 As you can see the C<add_to> action has the C<Direct> attribute attached
@@ -81,12 +81,12 @@ You should see something like this:
  --- 
  actions: 
    Calculator: 
-		- 
-		  len: 2
-		  name: add
-		- 
-		  len: 1
-		  name: echo
+        - 
+          len: 2
+          name: add
+        - 
+          len: 1
+          name: echo
  type: remoting
  url: /api/router
 
@@ -105,7 +105,7 @@ Open the C<index> template and add this to the head area:
 
 The API is now available from the variable C<Ext.app.REMOTING_API>.
 
-	
+    
 Fire up your favourite browser and go to L<http://localhost:3000/>.
 Open the debugger and type in the console:
 
@@ -113,13 +113,13 @@ Open the debugger and type in the console:
  // This will set up the classes and methods
  // Ext.app.REMOTING_API is provided by /api/src
  Calculator.add(3, 2, function(res){alert(res)});
-	
+    
 And watch the request and response. Next we call the C<echo> method.
 
  Calculator.echo({foo: 'bar'}, function(res){console.log(res)});
  // Prints {foo: 'bar'} to your browser's console
 
-	
+    
 =head2 RESTful Controllers
 
 
@@ -146,11 +146,11 @@ be located at C<root/forms/user.yml>:
   elements:
     - name: id
     - name: first
-	  constraint: Required
+      constraint: Required
     - name: last
-	  constraint: Required
+      constraint: Required
     - name: email
-	  constraint: Required
+      constraint: Required
 
 Since the columns C<first>, C<last> and C<email> were defined as 
 C<NOT NULL> columns, we have to add the C<Required> constraint to them.
@@ -200,7 +200,7 @@ Add a new controller C<lib/MyApp/Controller/User/DBIC.pm> and paste:
  # on those configuration parameters
  
  __PACKAGE__->config(
-	actions => { 
+    actions => { 
         setup  => { PathPart => 'user', Chained => '/' },
         # enable Direct on these actions
         create => { Direct => undef, DirectArgs => 1 }, 
@@ -209,23 +209,23 @@ Add a new controller C<lib/MyApp/Controller/User/DBIC.pm> and paste:
         delete => { Direct => undef }, 
         list   => { Direct => undef, DirectArgs => 1 },  
     },
-	class => 'DBIC::User',
-	use_json_boolean => 1,
-	create_requires => [qw(email first last)],
-	return_object => 1,
+    class => 'DBIC::User',
+    use_json_boolean => 1,
+    create_requires => [qw(email first last)],
+    return_object => 1,
  );
  
  # Catalyst::Controller::DBIC::API cannot handle scalars and arrayrefs so
  # we have to add a little hack
  
  before 'deserialize' => sub {
-	my ($self, $c) = @_;
-	$c->req->data($c->req->data->[0]) if(ref $c->req->data eq 'ARRAY');
-	$c->req->data(undef) unless(ref $c->req->data);
+    my ($self, $c) = @_;
+    $c->req->data($c->req->data->[0]) if(ref $c->req->data eq 'ARRAY');
+    $c->req->data(undef) unless(ref $c->req->data);
  };
  
  1;
-	
+    
 Access L<http://localhost:3000/> in your browser and open the console to
 play around with the DBIC API:
 
