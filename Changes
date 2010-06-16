@@ -1,5 +1,9 @@
 Revision history for CatalystX-ExtJS
 
+1.101670 2010-06-16
+  - Fixed content-type for Direct API
+  - Fixed prereq
+
 1.101570 2010-06-06
   - Fixed bogus bug where C::View::JSON prepends the BOM when agent = Safari
   - Fixed meta to not include example/tutorial libs
