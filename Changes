@@ -1,5 +1,8 @@
 Revision history for CatalystX-ExtJS
 
+1.101700 2010-06-19
+  - Fixed prereq
+
 1.101670 2010-06-16
   - Fixed content-type for Direct API
   - Fixed prereq
