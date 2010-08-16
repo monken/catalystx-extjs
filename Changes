@@ -1,5 +1,8 @@
 Revision history for CatalystX-ExtJS
 
+1.110000 2010-08-16
+  - Fixed form_base_file to work with deep-hierarchy controllers
+
 1.101700 2010-06-19
   - Fixed prereq
 

@@ -120,7 +120,8 @@ sub _build_form_base_path {
 sub _build_form_base_file {
     my $self = shift;
     my @path = split( /\//, $self->action_namespace );
-    return $self->form_base_path->file((pop @path) . '.yml');
+    my $file = pop @path;
+    return $self->form_base_path->subdir(@path)->file($file . '.yml');
 }
 
 sub _build_list_base_path {
