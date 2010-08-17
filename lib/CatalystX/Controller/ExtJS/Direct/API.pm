@@ -127,6 +127,7 @@ sub router {
             local $c->{response} = $c->response_class->new({});
             local $c->{stash} = {};
             local $c->{request} = $c->req;
+            local $c->{error} = undef;
             
             $c->req->parameters($params);
             $c->req->body_parameters($params);
@@ -144,7 +145,13 @@ sub router {
                     $body = $response->body;
                 }
             } or do {
-                push(@res, { type => 'exception', tid => $req->{tid}, message => "$@".$c->response->body });
+                my $msg;
+                if(scalar @{ $c->error }) {
+                    $msg = join "\n", @{ $c->error };
+                } else {
+                    $msg = "$@".$c->response->body;
+                }
+                push(@res, { type => 'exception', tid => $req->{tid}, message => $msg });
                 next REQUESTS;
             };
             
