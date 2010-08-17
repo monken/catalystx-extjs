@@ -1,5 +1,14 @@
 Revision history for CatalystX-ExtJS
 
+1.120000 2010-08-17
+  - Fixed #60070 (ExtJS 3.2.1 compatibility)
+  - Fixed #60396 (Ext.Direct error handling)
+  - Require JavaScript::Dumper (fixes bogus prereq problem)
+  
+  - The default root property is now "data". If you have set no_list_metadata then it will 
+    remain the old value of "rows"
+  - Also you can set root_property
+
 1.110000 2010-08-16
   - Fixed form_base_file to work with deep-hierarchy controllers
 

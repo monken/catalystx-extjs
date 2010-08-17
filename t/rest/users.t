@@ -31,55 +31,55 @@ $mech->get_ok('/users', undef, 'request list of users (/users)');
 
 ok(my $json = JSON::decode_json($mech->content), 'response is JSON response');
 
-is(@{$json->{rows}}, 200, '200 rows');
+is(@{$json->{data}}, 200, '200 data');
 
-is($json->{results}, 200, '200 rows');
+is($json->{results}, 200, '200 data');
 
 $mech->get_ok('/user', undef, 'request list of users (/user)');
 
 ok($json = JSON::decode_json($mech->content), 'response is JSON response');
 
-is(@{$json->{rows}}, 200, '200 rows');
+is(@{$json->{data}}, 200, '200 data');
 
-is($json->{results}, 200, '200 rows');
+is($json->{results}, 200, '200 data');
 
 $mech->get_ok('/users?start=10', undef, 'request list of users');
 
 ok($json = JSON::decode_json($mech->content), 'response is JSON response');
 
-is(@{$json->{rows}}, 190, '190 rows');
+is(@{$json->{data}}, 190, '190 data');
 
-is($json->{results}, 200, '200 rows');
+is($json->{results}, 200, '200 data');
 
 $mech->get_ok('/users?start=10&limit=20', undef, 'request list of users');
 
 ok($json = JSON::decode_json($mech->content), 'response is JSON response');
 
-is(@{$json->{rows}}, 20, '20 rows');
+is(@{$json->{data}}, 20, '20 data');
 
-is($json->{results}, 200, '200 rows');
+is($json->{results}, 200, '200 data');
 
 $mech->get_ok('/users?start=10&limit=20&sort=name', undef, 'request list of users');
 
 ok($json = JSON::decode_json($mech->content), 'response is JSON response');
 
-is(@{$json->{rows}}, 20, '20 rows');
+is(@{$json->{data}}, 20, '20 data');
 
-is($json->{results}, 200, '200 rows');
+is($json->{results}, 200, '200 data');
 
-is($json->{rows}->[0]->{name}, '0011', 'First row is user "0011"');
+is($json->{data}->[0]->{name}, '0011', 'First row is user "0011"');
 
 $mech->get_ok('/users?start=10&limit=20&sort=name&dir=desc', undef, 'request list of users');
 
 ok($json = JSON::decode_json($mech->content), 'response is JSON response');
 
-is($json->{rows}->[0]->{name}, '0190', 'First row is user "0190"');
+is($json->{data}->[0]->{name}, '0190', 'First row is user "0190"');
 
 $mech->get_ok('/users?start=10&limit=20&sort=password&dir=asc', undef, 'request list of users');
 
 ok($json = JSON::decode_json($mech->content), 'response is JSON response');
 
-is($json->{rows}->[0]->{name}, '0190', 'First row is user "0190"');
+is($json->{data}->[0]->{name}, '0190', 'First row is user "0190"');
 
 # custom options with validation
 
@@ -95,9 +95,9 @@ $mech->get_ok('/users?start=10&limit=20&sort=password&dir=ASC&ending=2', undef, 
 
 ok($json = JSON::decode_json($mech->content), 'response is JSON response');
 
-is(@{$json->{rows}}, 10, '10 users found');
+is(@{$json->{data}}, 10, '10 users found');
 
-map { ok($_->{name} =~ /2$/, 'user ends with 2') } @{$json->{rows}};
+map { ok($_->{name} =~ /2$/, 'user ends with 2') } @{$json->{data}};
 
 done_testing;
 

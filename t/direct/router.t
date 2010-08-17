@@ -200,7 +200,7 @@ is( ref $json->{result}, 'HASH', 'result is a hash' );
 $json = count_users(1);
 
 is_deeply(
-    $json->{result}->{rows},
+    $json->{result}->{data},
     [
         {
             'password' => 'foobar',
@@ -253,7 +253,7 @@ is( ref $json->{result}, 'HASH', 'result is a hash' );
 $json = count_users(1);
 
 is_deeply(
-    $json->{result}->{rows},
+    $json->{result}->{data},
     [
         {
             'password' => 'foobar2',

@@ -71,6 +71,8 @@ has 'form_config_cache' => ( is => 'rw', isa => 'HashRef', clearer => 'clear_for
 
 has 'default_resultset' => ( is => 'rw', isa => 'Str', lazy_build => 1 );
 
+has 'root_property'     => ( is => 'rw', isa => 'Str', default => 'data' );
+
 # backwards compat
 sub base_file { shift->form_base_file(@_) };
 sub base_path { shift->form_base_path(@_) };
@@ -228,9 +230,11 @@ sub list {
     
     my ($pk, $too_much) = $rs->result_source->primary_columns;
     
-    my $grid_data = $form->grid_data([$rs->all], {metaData => {idProperty => $pk, messageProperty => 'message' }});
+    my $grid_data = $form->grid_data([$rs->all], {metaData => {root => $self->root_property, idProperty => $pk, messageProperty => 'message' }});
     if ($self->_extjs_config->{no_list_metadata}) {
         delete $grid_data->{metaData};
+    } else {
+        $grid_data->{$self->root_property} = delete $grid_data->{rows};
     }
     my $count = $rs->search(undef, { rows => undef, offset => undef })->count;
     $grid_data->{results} = $count;
@@ -351,9 +355,10 @@ sub object_PUT {
     if ( $form->submitted_and_valid ) {
         my $row = $form->model->update($object);
         $self->handle_uploads($c, $row, $form);
-
+        my $data = $form->form_data( $row );
+		
         # get values from model
-        $self->status_ok( $c, entity => $form->form_data( $row ) );
+        $self->status_ok( $c, entity => $data );
     }
     else {
         # return form values and error messages
@@ -383,6 +388,8 @@ sub object_POST {
 		my ($pk, $too_much) = $row->result_source->primary_columns;
 		my $data = $form->form_data( $row );
 		$data->{data}->{$pk} = $row->$pk;
+        $data->{$self->root_property} = $data->{data} if($self->root_property ne 'data');
+		
 		$self->status_created(
             $c,
             location => $c->uri_for( '', $row->$pk ),
@@ -728,6 +735,11 @@ This defaults to C<extjs_rest_[controller namespace]>.
 
 A controller C<MyApp::Controller::User> expects a resultset method
 C<extjs_rest_user>.
+
+=head2 root_property
+
+Set the root property used by L</list>, update and create which will contain the data.
+Defaults to C<data>.
 
 =head2 context_stash
 

@@ -139,7 +139,6 @@ sub router {
                 if ( $response->content_type eq 'application/json' ) {
                     (my $res_body = $response->body) =~ s/^\xEF\xBB\xBF//; # remove BOM
                     my $json = JSON::Any->new->decode( $res_body );
-                    $json = $json->{data} if(ref $json eq 'HASH' && exists $json->{success} && exists $json->{data});
                     $body = $json;
                 } else {
                     $body = $response->body;
