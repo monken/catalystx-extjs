@@ -7,9 +7,10 @@ use base 'Catalyst::Action::Deserialize';
 
 sub execute {
     my ( $self, $controller, $c ) = @_;
-
+    
     if (   $c->req->is_ext_upload )
     {
+        unshift(@{$c->req->accepted_content_types}, 'application/json');
         return 1;
     }
     else {

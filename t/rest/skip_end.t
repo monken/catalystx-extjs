@@ -13,7 +13,6 @@ use Test::WWW::Mechanize::Catalyst 'MyApp';
 my $mech = Test::WWW::Mechanize::Catalyst->new();
 
 my $res = $mech->get('/skipend/form/edit_record');
-
 is($res->header('status'), 200, 'status ok');
 $mech->content_contains('MyApp.Forms.EditRecord.skipend_test', 'contains form name');
 $mech->content_contains("this.rest_url = '/skipend/'", 'contains action');

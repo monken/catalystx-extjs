@@ -1,5 +1,12 @@
 Revision history for CatalystX-ExtJS
 
+1.122000 2010-09-27
+  - Fixed location algorithm for config files
+  - Adjusted file upload via Direct
+
+1.121000 2010-08-18
+  - Fixed file uploads via the Ext.Direct API
+
 1.120000 2010-08-17
   - Fixed #60070 (ExtJS 3.2.1 compatibility)
   - Fixed #60396 (Ext.Direct error handling)

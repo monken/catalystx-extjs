@@ -8,7 +8,7 @@ use base 'Catalyst::Action::Serialize';
 sub execute {
     my ( $self, $controller, $c ) = @_;
     $self->next::method( $controller, $c );
-    if ( $c->stash->{upload} ) {
+    if ( $c->stash->{upload} && $c->stash->{upload} eq 'true' ) {
         $c->res->content_type('text/html');
         my $body = $c->res->body;
         $body =~ s/&quot;/\&quot;/;

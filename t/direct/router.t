@@ -119,7 +119,8 @@ is_deeply( $json, $response, 'expected response' );
 ok(
     $mech->request(
         POST $api->{url},
-        Content_Type => 'form-data',
+        Content_Type => 'multipart/form-data',
+        Accept => "application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5",
         Content      => [
             extAction => 'Calculator',
             extMethod => 'upload',
@@ -136,13 +137,33 @@ ok(
     'upload request'
 );
 
-is( $mech->content_type, 'text/html', 'content type is text/html' );
-
-like( $mech->content, qr/<textarea>(.*)</, 'result enclosed in textarea' );
-$mech->content =~ /<textarea>(.*)<\/textarea>/;
-ok( $json = decode_json($1), 'response is valid json' );
+is( $mech->content_type, 'application/json', 'content type is application/json' );
+ok( $json = decode_json($mech->content), 'response is valid json' );
 
 is( $json->{result}, 32, 'eval calculator works' );
+
+ok(
+    $mech->request(
+        POST $api->{url},
+        Content_Type => 'multipart/form-data',
+        Accept => "application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5",
+        Content      => [
+            extAction => 'Calculator',
+            extMethod => 'upload',
+            extTID    => 9,
+            extUpload => 'true',
+            extType   => 'rpc',
+            file      => [
+                undef, 'calc.txt',
+                'Content-Type' => 'text/plain',
+                Content        => '4*8*' # Syntax error
+            ],
+        ]
+    ),
+    'upload request'
+);
+
+like( $mech->content, qr/exception/, 'content contains exception' );
 
 ok( $mech->request( POST '/rest/object/1' ), 'chained action is working' );
 
@@ -230,6 +251,29 @@ ok(     $mech->request(
 ok( $json = decode_json( $mech->content ), 'response is valid json' );
 is( $json->{type}, 'rpc', 'type is rpc' );
 is( $json->{result}->{results}, 1, 'one result' );
+
+ok(
+    $mech->request(
+        POST $api->{url},
+        Content_Type => 'multipart/form-data',
+        Accept => "application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5",
+        Content => [
+            extAction => 'User',
+            extMethod => 'update',
+            extTID    => $tid,
+            extType   => 'rpc',
+            extUpload => 'true',
+            id => 1,
+            password  => 'foobar2',
+            name      => 'testuser',
+        ]
+    ),
+    'change user'
+);
+
+ok( $json = decode_json($mech->content), 'response is valid json' );
+
+is( ref $json->{result}, 'HASH', 'result is a HASH' );
 
 ok(
     $mech->request(

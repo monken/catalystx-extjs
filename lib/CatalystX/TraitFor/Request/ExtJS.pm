@@ -5,12 +5,13 @@ use Moose::Role;
 use namespace::autoclean;
 use JSON::XS;
 
-has 'is_ext_upload' => ( isa => 'Bool', is => 'rw', lazy_build => 1 );
+#has 'is_ext_upload' => ( isa => 'Bool', is => 'rw', lazy_build => 1 );
 
-sub _build_is_ext_upload {
+sub is_ext_upload {
     my ($self) = @_;
     return $self->header('Content-Type')
-      && $self->header('Content-Type') =~ /^multipart\/form-data/;
+      && $self->header('Content-Type') =~ /^multipart\/form-data/
+      && ( !$self->{content_type} || $self->{content_type} ne 'application/json');
 }
 
 around 'method' => sub {

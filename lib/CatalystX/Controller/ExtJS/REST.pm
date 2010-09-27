@@ -134,14 +134,16 @@ sub _build_list_base_path {
 sub _build_list_base_file {
     my $self = shift;
     my @path = split( /\//, $self->action_namespace );
-    my $file = $self->list_base_path->file((pop @path) . '.yml');
+    my $file = pop @path;
+    $file = $self->list_base_path->subdir(@path)->file($file . '.yml');
     return -e $file ? $file : $self->form_base_file;
 }
 
 sub _build_list_options_file {
     my $self = shift;
     my @path = split( /\//, $self->action_namespace );
-    my $file = $self->list_base_path->file((pop @path) . '_options.yml');
+    my $file = pop @path;
+    $file = $self->list_base_path->subdir(@path)->file($file . '_options.yml');
 	return -e $file ? $file : undef;
 }
 
@@ -177,6 +179,7 @@ sub validate_options {
 sub list {
     my ( $self, $c ) = @_;
 	$self->clear_caches if($c->debug);
+    $c->log->debug('Loading form ' . $self->list_base_file) if($c->debug);
     my $form = $self->get_form($c, $self->list_base_file);
     my $config = $form->model_config;
     croak "Need resultset and schema" unless($config->{resultset} && $config->{schema});
@@ -270,10 +273,9 @@ sub base {
     $self->object($c, $id);
 }
 
-
 sub object {
     my ( $self, $c, $id ) = @_;
-	croak $self->form_base_file." cannot be found" unless(-e $self->form_base_file);
+    croak $self->form_base_file." cannot be found" unless(-e $self->form_base_file);
 	$self->clear_caches if($c->debug);
     my $config = $self->load_config_file($self->form_base_file);
     $config = { %{$self->_extjs_config->{model_config}}, %{$config->{model_config} || {}} };
@@ -285,10 +287,10 @@ sub object {
 
     my $req_method = lc($c->req->method);
     
-    unless(defined $id || $req_method ne 'put') {
+    unless(defined $id) {
         my ($pk, $too_much) = $object->result_source->primary_columns;
         croak 'Not able to process result classes with multiple primary keys' if($too_much);
-        $id = $c->req->param($pk);
+        $id = $c->req->params->{$pk};
     }
     
     if(!defined $id && $req_method eq 'get') {
@@ -315,15 +317,18 @@ sub object {
         $c->stash->{object} = $object;
     }
 	
+	my $formconfig = $self->path_to_forms($req_method);
+	$c->log->debug('Loading form ' . $formconfig) if($c->debug);
+	
     $c->stash->{form} =
-      $self->get_form($c, $self->path_to_forms($req_method));
+      $self->get_form($c, $formconfig);
     
     if($req_method eq 'get') {
         $c->forward('object_GET');
+    } elsif($req_method eq 'put' || $req_method eq 'post' && $c->stash->{object}) {
+        $c->forward('object_PUT');
     } elsif($req_method eq 'post') {
         $c->forward('object_POST');
-    } elsif($req_method eq 'put') {
-        $c->forward('object_PUT');
     } elsif($req_method eq 'delete') {
         $c->forward('object_DELETE');
     }
@@ -421,16 +426,18 @@ sub object_DELETE {
     my ( $self, $c ) = @_;
     if($c->stash->{object}) {
         $c->stash->{object}->delete;
-        $self->status_ok( $c, entity => { message => "Object has been deleted" } );
+        $self->status_ok( $c, entity => { success => \1, data => {}, message => "Object has been deleted" } );
     } else {
-        $self->status_not_found($c, message => 'Object could not be found.');
+        $self->status_not_found($c, success => \0, data => {}, message => 'Object could not be found.');
     }
 }
 
 
 sub path_to_forms {
-    my $self = shift;
-    my $file = Path::Class::File->new($self->form_base_path . '_' . (shift) . '.yml');
+    my ($self, $method) = @_;
+    (my $file = $self->form_base_file) =~ s/\.yml$//;
+    $file .= '_' . $method . '.yml';
+    $file = Path::Class::File->new($file);
     return -e $file ? $file : $self->form_base_file;
 }
 
@@ -445,9 +452,10 @@ sub get_form {
 	}
 	$form->model_config($self->_extjs_config->{model_config});
 	
-	$file ||= $self->form_base_file;
-	my $config = $self->load_config_file($file);
-	$form->populate($config);	
+	if($file) { 
+	    my $config = $self->load_config_file($file);
+	    $form->populate($config);	
+    }
     # To allow your form validation packages, etc, access to the catalyst
     # context, a weakened reference of the context is copied into the form's
     # stash.
@@ -847,7 +855,8 @@ Returns the path to the default form config file.
 =head2 get_form
 
 Returns a new L<HTML::FormFu::ExtJS> class, sets the model config options and the
-request type to C<Catalyst>.
+request type to C<Catalyst>. The first parameter is the Catalyst context object C<$c>
+and optionally a L<Path::Class::File> object to load a config file.
 
 =head2 list
 
