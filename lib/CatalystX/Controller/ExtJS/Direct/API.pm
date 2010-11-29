@@ -43,7 +43,8 @@ sub _build_api {
     my $data   = {};
     foreach my $name ( $c->controllers ) {
         my $controller = $c->controller($name);
-        $name =~ s/:://;
+        $name =~ s/^API:://;
+        $name =~ s/:://g;
         my $meta       = $controller->meta;
         next
           unless ( $controller->can('is_direct') || $meta->does_role('CatalystX::Controller::ExtJS::Direct') );
@@ -107,7 +108,7 @@ sub router {
             && exists $routes->{ $req->{action} }
             && exists $routes->{ $req->{action} }->{ $req->{method} } )
         {
-            $self->status_bad_request( $c, { message => 'method not found' } );
+            $self->status_bad_request( $c, { message => sprintf('method %s in action %s does not exist', $req->{method}, $req->{action}) } );
             return;
         }
          my $route = $routes->{ $req->{action} }->{ $req->{method} };

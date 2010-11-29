@@ -1,5 +1,9 @@
 Revision history for CatalystX-ExtJS
 
+1.123000 2010-11-29
+  - API controllers in the API namespace lose the "API" prefix
+  - Fixed naming for actions in deep controller namespaces
+
 1.122000 2010-09-27
   - Fixed location algorithm for config files
   - Adjusted file upload via Direct

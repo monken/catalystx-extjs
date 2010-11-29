@@ -153,8 +153,8 @@ sub _build_default_resultset {
     my $prefix;
     
     # Copied from Catalyst::Utils
-    if($class =~ /^.+?::([MVC]|Model|View|Controller)::(.+)$/ ) {
-        $prefix = $2;
+    if($class =~ /^.+?::([MVC]|Model|View|Controller)::(API::)?(.+)$/ ) {
+        $prefix = $3;
     }
     return $prefix;
 }
