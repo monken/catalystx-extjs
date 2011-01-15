@@ -12,6 +12,10 @@ sub extjs_rest_user {
     return $self->search({ id => { LIKE => '%'.$ending }  });
 }
 
+sub hri {
+    shift->search( undef, { result_class => 'DBIx::Class::ResultClass::HashRefInflator' } );
+}
+
 sub none {
     shift->search({ id => undef });
 }

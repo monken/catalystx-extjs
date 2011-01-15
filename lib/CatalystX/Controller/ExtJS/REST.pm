@@ -413,8 +413,6 @@ sub object_GET {
     my ( $self, $c ) = @_;
     my $form = $c->stash->{form};
 
-    $form->process( $c->req );
-    
     if($c->stash->{object}) {
         $self->status_ok( $c, entity => $form->form_data( $c->stash->{object} ) );
     } else {
@@ -428,7 +426,7 @@ sub object_DELETE {
         $c->stash->{object}->delete;
         $self->status_ok( $c, entity => { success => \1, data => {}, message => "Object has been deleted" } );
     } else {
-        $self->status_not_found($c, success => \0, data => {}, message => 'Object could not be found.');
+        $self->status_not_found($c, message => 'Object could not be found.');
     }
 }
 

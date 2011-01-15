@@ -1,5 +1,9 @@
 Revision history for CatalystX-ExtJS
 
+1.124000 2010-12-13
+  - object_GET allowed to override certain fields
+  - fixed object_DELETE which was calling status_not_found incorrectly
+
 1.123000 2010-11-29
   - API controllers in the API namespace lose the "API" prefix
   - Fixed naming for actions in deep controller namespaces
