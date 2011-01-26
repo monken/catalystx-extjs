@@ -62,6 +62,16 @@ ok(
 
 count_users(0);
 
+ok(
+    $mech->request(
+        POST $api->{url},
+        Content_Type => 'application/json',
+        Content      => q({"action":"User","method":"create","data":[{"name":"a"}],"type":"rpc","tid":6})
+    ),
+    'create users with only one attribute'
+);
+
+count_users(1);
 
 sub count_users {
 	my $user = shift;

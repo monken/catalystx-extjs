@@ -143,14 +143,15 @@ sub prepare_request {
 		return $req;
 	}
 	my $read_or_destroy = $self->crud_action eq 'read' || $self->crud_action eq 'destroy';
-	my $data = $req->{data}->[-1];
+    my $create = $self->crud_action eq 'create';
+    my $data = $req->{data}->[-1];
 	if(ref $data eq 'HASH' && keys %$data == 1) {
 		my ($key) =  keys %$data;
 		if(ref $data->{$key} eq 'HASH' && !$read_or_destroy) {
 			$req->{data} = $data->{$key};
 		} elsif ( ref $data->{$key} eq 'ARRAY' ) {
 			return map { {%$req, data => $_} } @{$data->{$key}};
-		} elsif (!ref $data->{$key} || !$read_or_destroy) {
+		} elsif ((!ref $data->{$key} || !$read_or_destroy) && !$create) {
 			$req->{data} = $data->{$key};
 		}
 	}

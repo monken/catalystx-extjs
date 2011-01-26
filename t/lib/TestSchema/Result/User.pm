@@ -11,7 +11,7 @@ __PACKAGE__->add_columns(
 
     id => { data_type => 'integer' },
     name => { data_type => 'character varying' },
-    password => { data_type => 'character varying' },
+    password => { data_type => 'character varying', is_nullable => 1 },
     
 );
 

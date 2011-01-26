@@ -8,6 +8,7 @@ Revision history for CatalystX-ExtJS
   - forms can now be defined in the class itself (forms => { default => , get => , list => })
   - added tests and documentation
   - bump prereq versions
+  - fixed Ext.Direct create with only one attribute
 
 1.124000 2010-12-13
   - object_GET allowed to override certain fields
