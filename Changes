@@ -1,5 +1,14 @@
 Revision history for CatalystX-ExtJS
 
+1.125.0  2011-01-26
+  - pass 'object' or 'list' to the default_rs_method as second parameter
+  - limit of rows to fetch is now 100, set limit => 0 to disable
+  - order_by specifies the default column to sort (e.g. { -desc => 'updated_on' })
+  - silenced test warnings
+  - forms can now be defined in the class itself (forms => { default => , get => , list => })
+  - added tests and documentation
+  - bump prereq versions
+
 1.124000 2010-12-13
   - object_GET allowed to override certain fields
   - fixed object_DELETE which was calling status_not_found incorrectly

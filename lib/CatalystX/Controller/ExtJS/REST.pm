@@ -19,6 +19,8 @@ subtype 'PathClassDir', as 'Path::Class::Dir';
 coerce 'PathClassDir', from 'ArrayRef', via { Path::Class::Dir->new( @{$_[0]} ) };
 coerce 'PathClassDir', from 'Str', via { Path::Class::Dir->new( $_[0] ) };
 subtype 'PathClassFile', as 'Path::Class::File';
+coerce 'PathClassFile', from 'ArrayRef', via { Path::Class::File->new( @{$_[0]} ) };
+coerce 'PathClassFile', from 'Str', via { Path::Class::File->new( $_[0] ) };
 no Moose::Util::TypeConstraints;
 
 __PACKAGE__->config(
@@ -59,19 +61,25 @@ has '_extjs_config' => ( is => 'rw', isa => 'HashRef', builder => '_extjs_config
 
 has 'form_base_path' => ( is => 'rw', lazy_build => 1, isa => 'PathClassDir', coerce => 1 );
 
-has 'form_base_file' => ( is => 'rw', lazy_build => 1, isa => 'Path::Class::File' );
+has 'form_base_file' => ( is => 'rw', lazy_build => 1, isa => 'PathClassFile', coerce => 1 );
 
 has 'list_base_path' => ( is => 'rw', lazy_build => 1, isa => 'PathClassDir', coerce => 1 );
 
-has 'list_base_file' => ( is => 'rw', lazy_build => 1, isa => 'Path::Class::File' );
+has 'list_base_file' => ( is => 'rw', lazy_build => 1, isa => 'PathClassFile', coerce => 1 );
 
-has 'list_options_file' => ( is => 'rw', lazy_build => 1, isa => 'PathClassFile|Undef' );
+has 'list_options_file' => ( is => 'rw', lazy_build => 1, isa => 'PathClassFile|Undef', coerce => 1 );
 
 has 'form_config_cache' => ( is => 'rw', isa => 'HashRef', clearer => 'clear_form_config_cache', default => sub {{}});
 
 has 'default_resultset' => ( is => 'rw', isa => 'Str', lazy_build => 1 );
 
 has 'root_property'     => ( is => 'rw', isa => 'Str', default => 'data' );
+
+has 'limit' => ( is => 'rw', default => 100 );
+
+has 'order_by' => ( is => 'rw' );
+
+has 'forms' => ( is => 'rw', isa => 'HashRef', predicate => 'has_forms' );
 
 # backwards compat
 sub base_file { shift->form_base_file(@_) };
@@ -95,7 +103,7 @@ sub _extjs_config_builder {
             elements => [
                 { name => 'start', constraints => ['Integer', { type => 'MinRange', min => 0}] },
                 { name => 'dir', constraints => { type => 'Set', set => [qw(asc desc ASC DESC)] } },
-                { name => 'limit', constraints => ['Integer', { type => 'Range', min => 0, max => 100 }] },
+                { name => 'limit', constraints => ['Integer', { type => 'Range', min => 0, max => $self->limit || 9999 }] },
                 { name => 'sort' },
             ]
         },
@@ -168,7 +176,11 @@ sub validate_options {
     my ($self, $c) = @_;
     my $form = HTML::FormFu::ExtJS->new;
     $form->populate($self->_extjs_config->{list_options_validation});
-    if($self->list_options_file) {
+    if($self->has_forms) {
+        my $config = $self->forms->{options} || {};
+        $config = { elements => $config } if(ref $config eq 'ARRAY');
+        $form->populate( $config );
+    } elsif($self->list_options_file) {
         $c->log->debug('found configuration file for parameters') if($c->debug);
         $form->load_config_file($self->list_options_file);
     }
@@ -179,8 +191,7 @@ sub validate_options {
 sub list {
     my ( $self, $c ) = @_;
 	$self->clear_caches if($c->debug);
-    $c->log->debug('Loading form ' . $self->list_base_file) if($c->debug);
-    my $form = $self->get_form($c, $self->list_base_file);
+    my $form = $self->get_form($c, 'list');
     my $config = $form->model_config;
     croak "Need resultset and schema" unless($config->{resultset} && $config->{schema});
     my $model = join('::', $config->{schema}, $config->{resultset});
@@ -209,7 +220,7 @@ sub list {
         }
     }
     push(@args, map { $_ => [] } $c->req->param('resultset'));
-    unshift(@args, $self->_extjs_config->{default_rs_method} => []);
+    unshift(@args, $self->_extjs_config->{default_rs_method} => ['list']);
     
     for(my $i = 0; $i < @args; $i+=2) {
         next unless(my $rs_method = $args[$i]);
@@ -250,14 +261,17 @@ sub paging_rs {
     
     my $start = abs(int($params->{start} || 0));
     
-    my $limit = abs(int($params->{limit} || 0));
+    my $limit = abs(int($params->{limit} || $self->limit));
 
     return $rs if($start == 0 && $limit == 0);
 
     my @direction = grep { $_ eq (lc($params->{dir}) || 'asc') } qw(asc desc);
     my $direction = q{-}.(shift @direction);
     
-    my $sort = $params->{sort} || undef;
+    my $sort = $params->{sort} || $self->order_by || undef;
+    if(ref $sort eq 'HASH') {
+        ($direction, $sort) = %$sort;
+    }
     
     undef $sort unless($form->get_all_element({ nested_name => $sort }));
     
@@ -275,9 +289,9 @@ sub base {
 
 sub object {
     my ( $self, $c, $id ) = @_;
-    croak $self->form_base_file." cannot be found" unless(-e $self->form_base_file);
 	$self->clear_caches if($c->debug);
-    my $config = $self->load_config_file($self->form_base_file);
+    my $config = $self->has_forms ? $self->forms->{default} : $self->load_config_file($self->form_base_file);
+    $config = { elements => $config } if(ref $config eq 'ARRAY');
     $config = { %{$self->_extjs_config->{model_config}}, %{$config->{model_config} || {}} };
     $config->{resultset} ||= $self->default_resultset;
     croak "Need resultset and schema" unless($config->{resultset} && $config->{schema});
@@ -303,7 +317,7 @@ sub object {
     if(my $rs = $self->_extjs_config->{default_rs_method}) {
         if($object->can($rs)) {
             $c->log->debug(qq(Calling default resultset method $rs)) if($c->debug);
-            $object = $object->$rs($c);
+            $object = $object->$rs($c, 'object');
         } elsif($c->debug) {
             $c->log->debug(qq(Default resultset method $rs cannot be found));
         }
@@ -317,11 +331,8 @@ sub object {
         $c->stash->{object} = $object;
     }
 	
-	my $formconfig = $self->path_to_forms($req_method);
-	$c->log->debug('Loading form ' . $formconfig) if($c->debug);
-	
     $c->stash->{form} =
-      $self->get_form($c, $formconfig);
+      $self->get_form($c, $req_method);
     
     if($req_method eq 'get') {
         $c->forward('object_GET');
@@ -441,6 +452,7 @@ sub path_to_forms {
 
 sub get_form {
     my ($self, $c, $file) = @_;
+    
 	my $form = HTML::FormFu::ExtJS->new();
 	$form->query_type('Catalyst');
 	my $model_stash = $self->_extjs_config->{model_stash};
@@ -450,10 +462,27 @@ sub get_form {
 	}
 	$form->model_config($self->_extjs_config->{model_config});
 	
-	if($file) { 
-	    my $config = $self->load_config_file($file);
-	    $form->populate($config);	
+	
+
+   if ( $file && !ref $file ) {
+        if ( $self->has_forms ) {
+            my $config = $self->forms->{$file} || $self->forms->{default};
+            $config = { elements => $config } if(ref $config eq 'ARRAY');
+            $form->populate( $config );
+        } elsif ( $file eq 'list' ) {
+            $file = $self->list_base_file;
+        } else {
+            $file = $self->path_to_forms($file);
+        }
     }
+
+    if ( ref $file ) {
+        $c->log->debug( 'Loading form ' . $file ) if ( $c->debug );
+        my $config = $self->load_config_file($file);
+        $form->populate($config);
+    }
+
+
     # To allow your form validation packages, etc, access to the catalyst
     # context, a weakened reference of the context is copied into the form's
     # stash.
@@ -568,8 +597,11 @@ If you create a controller C<MyApp::Controller::User>:
   
   1;
   
-You also need to create a file C<root/forms/user.yml>. To a more fine
-grained control over object creation, deletion, update or listing, you 
+Forms can be defined either in files or directly in the controller.
+To see how to define forms directly in the controller see L</forms>.
+
+If you are creating files, you need at least one file called C<root/forms/user.yml>.
+For a more fine grained control over object creation, deletion, update or listing, you 
 have to create some more files.
 
 
@@ -733,7 +765,9 @@ Defaults to C<find>.
 
 This resultset method is called on every request. This is useful if you want to 
 restrict the resultset, e. g. only find objects which are associated to the
-current user.
+current user. The first parameter is the Catalyst context object and the second
+parameter is either C<list> (if a list of objects has been requested) or C<object>
+(if only one object is manipulated).
 
 Nothing is called if the specified method does not exist.
 
@@ -762,6 +796,30 @@ Default value: C<context>
 
 Defaults to C<root/forms>
 
+=head2 forms
+
+If you define forms in the controller, files will not be loaded and are not required.
+You need to have at least the C<default> form defined. It is equivalent to the file
+without the request method appended.
+
+Example:
+
+  forms => {
+      default => [
+        { name => 'id' },
+        { name => 'title' },
+      ],
+      get => ...
+      list => ...
+      options => ...
+  }
+
+See C<< t/lib/MyApp/Controller/InlineUser.pm >> for a working example.
+
+=head2 limit
+
+The maximum number of rows to return. Defaults to 100.
+
 =head2 list_base_path
 
 Defaults to C<root/lists>
@@ -785,6 +843,14 @@ Defaults to L</default_resultset>
 =head2 namespace
 
 Defaults to L<Catalyst::Controller/namespace>
+
+=head2 order_by
+
+Specify the default sort order. 
+
+Examples:
+ order_by => 'productid'
+ order_by => { -desc => 'updated_on' }
 
 =head2 list_namespace
 
@@ -936,8 +1002,6 @@ These methods are private. Please don't overwrite those unless you know what you
 
 Run this code before any action in this controller. It sets the C<ActionClass> to L<CatalystX::Action::ExtJS::Deserialize>.
 This C<ActionClass> makes sure that no deserialization happens if the body's content is a file upload.
-
-=cut
 
 =head2 end
 

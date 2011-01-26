@@ -108,7 +108,7 @@ sub router {
             && exists $routes->{ $req->{action} }
             && exists $routes->{ $req->{action} }->{ $req->{method} } )
         {
-            $self->status_bad_request( $c, { message => sprintf('method %s in action %s does not exist', $req->{method}, $req->{action}) } );
+            $self->status_bad_request( $c, { message => sprintf('method %s in action %s does not exist', $req->{method} || '', $req->{action} || '') } );
             return;
         }
          my $route = $routes->{ $req->{action} }->{ $req->{method} };
@@ -151,7 +151,7 @@ sub router {
                 if(scalar @{ $c->error }) {
                     $msg = join "\n", @{ $c->error };
                 } else {
-                    $msg = "$@".$c->response->body;
+                    $msg = join("\n", "$@", $c->response->body || ());
                 }
                 push(@res, { type => 'exception', tid => $req->{tid}, message => $msg });
                 $c->log->debug($msg) if($c->debug);
