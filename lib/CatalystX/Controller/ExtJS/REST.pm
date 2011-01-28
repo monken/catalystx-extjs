@@ -274,11 +274,14 @@ sub paging_rs {
         ($direction, $sort) = %$sort;
     }
     
-    undef $sort unless($form->get_all_element({ nested_name => $sort }));
+    unless($form->get_all_element({ nested_name => $sort })) {
+        $sort =~ s/(?<=[a-z])([A-Z])/\.\l$1/gsx; # relationshipColumn => relationship.column
+        undef $sort unless($form->get_all_element({ nested_name => $sort }));
+    }
     
     my $paged = $rs->search(undef, { offset => $start, rows => $limit || undef});
-    my $me = $rs->current_source_alias;
-    $paged = $paged->search(undef, { order_by => [ { $direction => join('.', $me, $sort) } ] })
+    $sort = join('.', $rs->current_source_alias, $sort) unless(!$sort || $sort =~ /\./);
+    $paged = $paged->search(undef, { order_by => [ { $direction => $sort } ] })
       if $sort;
     return $paged;
 }
