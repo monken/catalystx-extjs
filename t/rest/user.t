@@ -36,6 +36,14 @@ for (0..1) {
 
     is($json->{results}, 1, 'one results');
 
+    $mech->get("/${inline}user/999", undef, 'get user 999');
+
+    ok($json = JSON::decode_json($mech->content), 'response is JSON response');
+
+    ok(exists $json->{success}, 'success exists');
+
+    ok(!$json->{success}, 'success is false');
+
     $mech->get_ok("/${inline}user/1", undef, 'get user 1');
 
     ok($json = JSON::decode_json($mech->content), 'response is JSON response');

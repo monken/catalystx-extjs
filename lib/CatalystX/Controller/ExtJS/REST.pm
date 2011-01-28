@@ -201,7 +201,7 @@ sub list {
     
     if($validate_options->has_errors) {
         $self->status_bad_request($c, message => 'One ore more parameters did not pass the validation');
-        $c->stash->{rest} = { errors => $validate_options->validation_response->{errors} };
+        $c->stash->{rest} = { errors => $validate_options->validation_response->{errors}, status => \0 };
         return;
     }
 
@@ -519,6 +519,11 @@ sub handle_uploads {
     $row->update;
 }
 
+sub status_not_found {
+    my $self = shift;
+    $self->next::method(@_);
+    shift->stash->{rest}->{success} = \0;
+}
 
 sub end {
     my ( $self, $c ) = @_;
