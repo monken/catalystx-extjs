@@ -1,6 +1,6 @@
 Revision history for CatalystX-ExtJS
 
-1.125.0  2011-01-26
+2.0.0  2011-01-26
   - pass 'object' or 'list' to the default_rs_method as second parameter
   - limit of rows to fetch is now 100, set limit => 0 to disable
   - order_by specifies the default column to sort (e.g. { -desc => 'updated_on' })
@@ -9,8 +9,12 @@ Revision history for CatalystX-ExtJS
   - added tests and documentation
   - bump prereq versions
   - fixed Ext.Direct create with only one attribute
-  - don't ship extjs, using CDN for examples instead
-  - using ExtJS 3.3.1 in examples
+  - don't ship extjs, using CDN for examples and tutorial instead
+  - using ExtJS 3.3.1 in examples and tutorial
+  - catch exceptions in Controller::REST and send a 400 bad_request status to the browser
+    including a message and success: false
+  - Ext.Direct will send an exception if the response status of the subrequest is >= 400
+    The response includes the status of the subrequest as well as $c->error or the body
 
 1.124000 2010-12-13
   - object_GET allowed to override certain fields

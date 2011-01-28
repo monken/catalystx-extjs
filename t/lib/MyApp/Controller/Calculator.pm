@@ -26,7 +26,7 @@ sub upload : Path : Direct {
 	my($self, $c) = @_;
 	my $file = $c->req->upload('file')->slurp;
 	$c->res->content_type('text/plain');
-	$c->res->body( eval $file );
+	$c->res->body( eval $file or die );
 }
 
 1;

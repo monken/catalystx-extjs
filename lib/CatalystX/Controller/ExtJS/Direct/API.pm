@@ -5,6 +5,7 @@ extends qw(Catalyst::Controller::REST);
 use MooseX::MethodAttributes;
 
 use List::Util qw(first);
+use List::MoreUtils ();
 use JSON::Any;
 use CatalystX::Controller::ExtJS::Direct::Route;
 
@@ -146,14 +147,22 @@ sub router {
                 } else {
                     $body = $response->body;
                 }
+                
+                if(@{$c->error}) { 0 }
+                elsif($response->status >= 400) {
+                    $c->error($body);
+                    0;
+                } else { 1 } 
             } or do {
                 my $msg;
-                if(scalar @{ $c->error }) {
+                if(@{ $c->error } && List::MoreUtils::all { ref $_ } @{ $c->error }) {
+                    $msg = @{$c->error} == 1 ? $c->error->[0] : $c->error;
+                } elsif(scalar @{ $c->error }) {
                     $msg = join "\n", @{ $c->error };
                 } else {
                     $msg = join("\n", "$@", $c->response->body || ());
                 }
-                push(@res, { type => 'exception', tid => $req->{tid}, message => $msg });
+                push(@res, { type => 'exception', tid => $req->{tid}, message => $msg, status => $c->res->status });
                 $c->log->debug($msg) if($c->debug);
                 next REQUESTS;
             };

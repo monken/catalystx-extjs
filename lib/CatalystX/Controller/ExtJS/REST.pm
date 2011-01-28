@@ -13,6 +13,7 @@ use Path::Class;
 use HTML::Entities;
 use Lingua::EN::Inflect;
 use JSON::Any;
+use Try::Tiny;
 
 use Moose::Util::TypeConstraints;
 subtype 'PathClassDir', as 'Path::Class::Dir';
@@ -333,7 +334,6 @@ sub object {
 	
     $c->stash->{form} =
       $self->get_form($c, $req_method);
-    
     if($req_method eq 'get') {
         $c->forward('object_GET');
     } elsif($req_method eq 'put' || $req_method eq 'post' && $c->stash->{object}) {
@@ -523,6 +523,13 @@ sub handle_uploads {
 sub end {
     my ( $self, $c ) = @_;
     $self->next::method($c);
+    if(@{$c->error}) {
+        $self->status_bad_request($c, message => $c->debug ? "@{$c->error}" : 'An error occured while processing your request.');
+        $c->log->error(@{$c->error});
+        $c->clear_errors;
+        $c->stash->{rest}->{success} = \0;
+    }
+    
     if ( $c->req->is_ext_upload ) {
         my $stash_key = (
               $self->config->{'serialize'}

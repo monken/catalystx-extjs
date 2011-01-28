@@ -330,7 +330,29 @@ is( ref $json->{result}, 'HASH', 'result is a hash' );
 count_users(0);
 
 
+ok(
+    $mech->request(
+        POST $api->{url},
+        [
+            extAction => 'User',
+            extMethod => 'create',
+            extTID    => $tid,
+            extType   => 'rpc',
+            password  => 'foobar',
+        ]
+    ),
+    'create user without a name'
+);
 
+ok( $json = decode_json( $mech->content ), 'response is valid json' );
+
+is( ref $json->{message}, 'HASH', 'result is a hash' );
+
+ok(exists $json->{message}->{success}, 'Success status exists');
+
+ok(!$json->{message}->{success}, 'Success is false');
+
+is($json->{status}, 400, 'Status is set to 400');
 
 sub count_users {
 	my $user = shift;
