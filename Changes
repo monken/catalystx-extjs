@@ -16,6 +16,8 @@ Revision history for CatalystX-ExtJS
   - Ext.Direct will send an exception if the response status of the subrequest is >= 400
     The response includes the status of the subrequest as well as $c->error or the body
   - status_not_found also includes success => 0 in it's response
+  - request trait application moved to Deserializer action class
+  - added namespace option to /api/src
 
 1.124000 2010-12-13
   - object_GET allowed to override certain fields

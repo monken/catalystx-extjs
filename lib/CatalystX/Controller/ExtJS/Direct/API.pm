@@ -35,7 +35,7 @@ sub index { }
 sub src {
     my ($self, $c) = @_;
     $c->res->content_type('application/javascript');
-    $c->res->body( 'Ext.app.REMOTING_API = ' . $self->encoded_api . ';' );
+    $c->res->body( 'Ext.app.REMOTING_API = ' . $self->encoded_api($c) . ';' );
 }
 
 sub _build_api {
@@ -75,7 +75,7 @@ sub _build_api {
 
 sub encoded_api {
     my ( $self, $c ) = @_;
-    return JSON::Any->new->to_json( $self->api );
+    return JSON::Any->new->to_json( $self->set_namespace( $self->api, $c ? $c->req->params->{namespace} : () ) );
 }
 
 sub router {
@@ -179,14 +179,30 @@ sub router {
 
 }
 
+sub set_namespace {
+    my ($self, $api, $namespace) = @_;
+    return $api unless($namespace && $namespace =~ /^\w+(\.\w+)?$/);
+    return {%$api, namespace => $namespace };
+}
+
 sub end {
     my ( $self, $c ) = @_;
-    $c->stash->{rest} ||= $self->api;
+    $c->stash->{rest} ||= $self->set_namespace( $self->api, $c->req->params->{namespace} );
 }
 
 1;
 
 __END__
+
+=head1 SYNOPSIS
+
+ package MyApp::Controller::API;
+ use Moose;
+ extends 'CatalystX::Controller::ExtJS::Direct::API';
+ 1;
+
+ <script type="text/javascript" src="/api/src?namespace=MyApp.Direct"></script>
+ <script>Ext.Direct.addProvider(Ext.app.REMOTING_API);</script>
 
 =head1 ACTIONS
 
@@ -203,6 +219,13 @@ Example:
   1;
   
 The router is now available at C<< /api/callme >>.
+
+=head2 src
+
+Provides the API as JavaScript. Include this action in your web application as shown in the L</SYNOPSIS>.
+To set the namespace for the API, pass a C<namespace> query parameter:
+
+  <script type="text/javascript" src="/api/src?namespace=MyApp.Direct"></script>
   
 =head2 index
 

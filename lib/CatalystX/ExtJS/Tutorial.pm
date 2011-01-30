@@ -51,7 +51,7 @@ the C<index> subroutine to:
 
  sub index :Path :Args(0) { }
 
-This removes the Catalyst welcome message and a request to </> will run
+This removes the Catalyst welcome message and a request to C</> will run
 the C<index> template (which we will create later) via the TT view. 
 
 =head2 Step 4: Add the C<index> Template

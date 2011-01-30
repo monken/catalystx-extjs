@@ -72,7 +72,12 @@ my $content = $mech->content;
 $lens++ while( $content =~ /"len":(\d+)/g );
 is($lens, 22 );
 
+$mech->get_ok( '/api?namespace=MyApp', undef, 'get api via a request' );
+ok( $json = decode_json( $mech->content ), 'valid json' );
+
+is_deeply( $json, {%$api, namespace => "MyApp"}, 'namespace is set on api' );
+
 # $api = MyApp->controller('API')->api;
-# use Data::Dumper; print Dumper $api;
+# use Data::Dumper; print Dumper $json;
 
 done_testing;
