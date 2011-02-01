@@ -500,6 +500,8 @@ sub load_config_file {
 	my ($self, $file) = @_;
 	my $config;
     unless($config = $self->form_config_cache->{$file . ""}) {
+        die "Neither __PACKAGE__->config->{forms} nor " . $file . " exist."
+            unless(-e $file);
 		$config = Config::Any->load_files( {
                     files => [$file],
                     use_ext         => 1,

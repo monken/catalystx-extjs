@@ -163,7 +163,7 @@ sub router {
                     $msg = join("\n", "$@", $c->response->body || ());
                 }
                 push(@res, { type => 'exception', tid => $req->{tid}, message => $msg, status => $c->res->status });
-                $c->log->debug($msg) if($c->debug);
+                $c->log->dump($msg) if($c->debug && !ref $msg);
                 next REQUESTS;
             };
             

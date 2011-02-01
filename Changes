@@ -1,6 +1,9 @@
 Revision history for CatalystX-ExtJS
 
-2.0.0  2011-01-26
+NEXT
+  - added error message if file could not be found
+
+2.0.0  2011-01-31
   - pass 'object' or 'list' to the default_rs_method as second parameter
   - limit of rows to fetch is now 100, set limit => 0 to disable
   - order_by specifies the default column to sort (e.g. { -desc => 'updated_on' })
