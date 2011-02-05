@@ -1,8 +1,0 @@
----
-  model_config:
-    find_method: find_or_default
-  elements:
-    - name: id
-      type: Hidden
-    - name: password
-    - name: name

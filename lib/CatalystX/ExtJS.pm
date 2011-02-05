@@ -12,7 +12,7 @@ L<CatalystX::ExtJS::Tutorial>.
 
 =item L<CatalystX::ExtJS::Tutorial::Direct>
 
-How to use Ext.Direct and L<CatalystX::Controller::ExtJS::Direct::API>.
+How to use Ext.Direct and L<CatalystX::ExtJS::Direct>.
 
 =back
 
@@ -21,11 +21,11 @@ How to use Ext.Direct and L<CatalystX::Controller::ExtJS::Direct::API>.
 
 =over
 
-=item L<CatalystX::Controller::ExtJS::Direct::API>
+=item L<CatalystX::ExtJS::Direct>
 
 Generate an API for Ext.Direct from Catalyst Actions.
 
-=item L<CatalystX::Controller::ExtJS::REST>
+=item L<CatalystX::ExtJS::REST>
 
 RESTful interface to your data objects.
 
