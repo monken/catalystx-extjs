@@ -29,6 +29,10 @@ Generate an API for Ext.Direct from Catalyst Actions.
 
 RESTful interface to your data objects.
 
+=item L<CatalystX::Controller::ExtJS::REST::SimpleExcel>
+
+Serialize data from L<CatalystX::ExtJS::REST> to Excel spreadsheets.
+
 =item L<CatalystX::Controller::ExtJS::ImageChooser>
 
 Controller class for the ExtJS ImageChooser component.

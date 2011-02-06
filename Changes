@@ -1,6 +1,9 @@
 Revision history for CatalystX-ExtJS
 
-2.1.0
+2.1.1  2011-02-06
+  - Fixed prereqs to include example and tutorial prereqs
+
+2.1.0  2011-02-05
   - CatalystX::ExtJS has been split up in CatalystX::ExtJS::Direct and
     CatalystX::ExtJS::REST. Installing this module will pull in both of
     them, so nothing changes for you. The benefit is that you can use
