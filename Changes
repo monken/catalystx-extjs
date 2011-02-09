@@ -1,5 +1,9 @@
 Revision history for CatalystX-ExtJS
 
+2.1.2  2011-02-09
+  - more prereqs
+  - tutorial fix
+
 2.1.1  2011-02-06
   - Fixed prereqs to include example and tutorial prereqs
 

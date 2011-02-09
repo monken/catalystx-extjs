@@ -64,6 +64,7 @@ Now it's time to build some HTML and JavaScript. Add this to C<root/src/index>:
  <link rel="stylesheet" type="text/css" href="http://extjs.cachefly.net/ext-3.3.1/resources/css/ext-all.css" />
  <script type="text/javascript" src="http://extjs.cachefly.net/ext-3.3.1/adapter/ext/ext-base.js"></script>
  <script type="text/javascript" src="http://extjs.cachefly.net/ext-3.3.1/ext-all-debug.js"></script>
+ <script type="text/javascript" src="/api/src"></script>
  </head>
  <body>Hello World!</body>
  </html>
